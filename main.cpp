@@ -1,1 +1,3 @@
-fygtj
+int main(){
+    
+}
