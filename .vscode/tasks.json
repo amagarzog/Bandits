@@ -32,7 +32,7 @@
                 "${workspaceFolder}/main.cpp",
                 "-o",
                 "${workspaceFolder}/main",
-                "--debug"
+                //"--debug"
             ]
         }
     ],
