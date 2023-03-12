@@ -7,7 +7,7 @@ Player_Hedge::Player_Hedge(int K, double T, double min_payoff, double max_payoff
     max_payoff_(max_payoff),
     weights_(K, 1),
     T_(T),
-    gamma_t_(sqrt(8 * log(K) / T)) {
+    gamma_t_(sqrt(8 * log(K) / T)){
     type_ = "Hedge";
 }
 
@@ -85,6 +85,54 @@ void Player_Hedge::Update(std::vector<int> played_actions, int player_idx, std::
         weights_[i] = weights_[i] / sum_weights;
     }
 }
+
+
+Player_GPMW::Player_GPMW(int K, int T, double min_payoff, double max_payoff, std::vector<std::vector<double>> my_strategy_vecs, double kernel, double sigma_e) {
+    type = "GPMW";
+    this->K = K;
+    this->min_payoff = min_payoff;
+    this->max_payoff = max_payoff;
+    weights.resize(K, 1.0);
+    this->T = T;
+
+    for (int i = 0; i < my_strategy_vecs[0].size(); i++) {
+        if (std::abs(std::accumulate(my_strategy_vecs.begin(), my_strategy_vecs.end(), 0.0, [i](double sum, std::vector<double> v) {return sum + v[i]; })) > 1e-5) {
+            idx_nonzeros.push_back(i);
+        }
+    }
+
+    cum_losses.resize(K, 0.0);
+    mean_rewards_est.resize(K, 0.0);
+    std_rewards_est.resize(K, 0.0);
+    ucb_rewards_est.resize(K, 0.0);
+    gamma_t = std::sqrt(8 * std::log(K) / T);
+    this->kernel = kernel;
+    this->sigma_e = sigma_e;
+    strategy_vecs = my_strategy_vecs;
+
+    history_payoffs = std::vector<double>();
+    history = std::vector<std::vector<double>>();
+    demand = *std::max_element(my_strategy_vecs[0].begin(), my_strategy_vecs[0].end());
+}
+
+std::vector<double> Player_GPMW::mixed_strategy() {
+    double sum_weights = std::accumulate(weights.begin(), weights.end(), 0.0);
+    std::vector<double> mixed(K);
+    for (int i = 0; i < K; i++) {
+        mixed[i] = weights[i] / sum_weights;
+    }
+    return mixed;
+}
+
+int Player_GPMW::sample_action() {
+    std::vector<double> mixed = mixed_strategy();
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::discrete_distribution<> dist(mixed.begin(), mixed.end());
+    return dist(gen);
+}
+
+
 
 
 

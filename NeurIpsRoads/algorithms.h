@@ -6,6 +6,7 @@
 #include <string>
 #include <numeric>
 #include <iostream>
+#include <random>
 /*#include <GPy/GPy.hpp>
 #include <GPy/kern/RBF.hpp>
 #include <Eigen/Dense>
@@ -13,6 +14,10 @@
 using namespace Eigen;*/
 
 using namespace std;
+
+/*
+ Player Hedge
+*/
 
 class Player_Hedge {
 public:
@@ -39,6 +44,39 @@ private:
     double gamma_t_;
 };
 
+/*
+Player GPMW
+*/
+
+class Player_GPMW {
+public:
+    Player_GPMW(int K, int T, double min_payoff, double max_payoff, std::vector<std::vector<double>> my_strategy_vecs, double kernel, double sigma_e);
+
+    std::vector<double> mixed_strategy();
+    int sample_action();
+
+private:
+    std::string type;
+    int K;
+    double min_payoff;
+    double max_payoff;
+    std::vector<double> weights;
+    int T;
+    std::vector<int> idx_nonzeros;
+
+    std::vector<double> cum_losses;
+    std::vector<double> mean_rewards_est;
+    std::vector<double> std_rewards_est;
+    std::vector<double> ucb_rewards_est;
+    double gamma_t;
+    double kernel;
+    double sigma_e;
+    std::vector<std::vector<double>> strategy_vecs;
+
+    std::vector<double> history_payoffs;
+    std::vector<std::vector<double>> history;
+    double demand;
+};
 
 
 /*
