@@ -56,6 +56,113 @@ void Initilize_Players_ini() {
 }
 
 /*
+#include <vector>
+#include <cmath>
+#include <iostream>
+#include "Game_data.hpp"
+#include "Player.hpp"
+#include "SiouxNetwork_data_original.hpp"
+#include "Strategy_vectors.hpp"
+
+void Simulate_Game(int run, std::vector<Player*>& Players, int T, SiouxNetwork_data_original& SiouxNetwork_data_original, Strategy_vectors& Strategy_vectors, std::vector<double>& sigmas, std::vector<std::vector<int>>& Capacities, std::vector<int>* Contexts = nullptr) {
+    int N = Players.size();
+    Game_data Game_data(N);
+    for (int i = 0; i < N; ++i) {
+        Game_data.Cum_losses[i].resize(Players[i]->K);
+    }
+
+    std::vector<std::vector<double>> Total_occupancies;
+    std::vector<std::vector<double>> addit_Congestions;
+    std::vector<double> original_capacities(SiouxNetwork_data_original.Capacities);
+
+    for (int t = 0; t < T; ++t) {
+        std::vector<int> Capacities_t(Capacities[Contexts != nullptr ? (*Contexts)[t] : 0]);
+        std::vector<int> played_actions_t(N);
+        for (int i = 0; i < N; ++i) {
+            if (Players[i]->type == "cHedge" || Players[i]->type == "cGPMWpar" || Players[i]->type == "RobustLinExp3") {
+                played_actions_t[i] = Players[i]->sample_action(Contexts != nullptr ? (*Contexts)[t] : 0, Capacities_t);
+            } else {
+                if (Players[i]->type == "cGPMW" && t > 0) {
+                    Players[i]->Compute_strategy(Capacities_t);
+                }
+                played_actions_t[i] = Players[i]->sample_action();
+            }
+        }
+        Game_data.Played_actions.push_back(played_actions_t);
+
+        std::vector<double> losses_t = Compute_traveltimes(SiouxNetwork_data_original, Strategy_vectors, Game_data.Played_actions[t], "all", Capacities_t);
+        Game_data.Incurred_losses.push_back(losses_t);
+
+        Total_occupancies.push_back(std::vector<double>(Strategy_vectors[0].size(), 0.0));
+        for (int i = 0; i < N; ++i) {
+            for (int j = 0; j < Strategy_vectors[i].size(); ++j) {
+                Total_occupancies[t][j] += Strategy_vectors[i][Game_data.Played_actions[t][i]][j];
+            }
+        }
+
+        std::vector<double> congestions(Capacities_t.size(), 0.0);
+        for (int i = 0; i < Capacities_t.size(); ++i) {
+            congestions[i] = 0.15 * std::pow(Total_occupancies[t][i] / Capacities_t[i], 4);
+        }
+        addit_Congestions.push_back(congestions);
+
+        for (int i = 0; i < N; ++i) {
+            if (Players[i]->type == "EXP3P") {
+                double noisy_loss = Game_data.Incurred_losses[t][i] + sigmas[i] * std::sqrt(2 * std::log(N) / (N * T));
+                Players[i]->Update(Game_data.Played_actions[t][i], -noisy_loss);
+
+            } else if (Players[i].type == "Hedge") {
+                Players[i].Update(Game_data.Played_actions[t], i , SiouxNetwork_data_original, Capacities_t,  Strategy_vectors);
+            }
+
+            if (Players[i].type == "cHedge") {
+                Players[i].Update(Game_data.Played_actions[t], Contexts[t], i , SiouxNetwork_data_original, original_capacities, Capacities_t,  Strategy_vectors);
+            }
+
+            if (Players[i].type == "RobustLinExp3") {
+                double noisy_loss = Game_data.Incurred_losses[t][i] + normal_distribution<double>(0, sigmas[i])(rng);
+                Players[i].Update(Game_data.Played_actions[t], Contexts[t], i , SiouxNetwork_data_original, Strategy_vectors, original_capacities, Capacities_t, noisy_loss);
+            }
+
+            if (Players[i].type == "GPMW") {
+                double noisy_loss = Game_data.Incurred_losses[t][i] + normal_distribution<double>(0, sigmas[i])(rng);
+                Players[i].Update(Game_data.Played_actions[t][i], Total_occupancies.back(), -noisy_loss, Capacities_t);
+            }
+
+            if (Players[i].type == "cGPMW") {
+                double noisy_loss = Game_data.Incurred_losses[t][i] + normal_distribution<double>(0, sigmas[i])(rng);
+                Players[i].Update_history(Game_data.Played_actions[t][i], -noisy_loss, Total_occupancies.back(), Capacities_t );
+            }
+
+            if (Players[i].type == "cGPMWpar") {
+                double noisy_loss = Game_data.Incurred_losses[t][i] + normal_distribution<double>(0, sigmas[i])(rng);
+                Players[i].Update_history(Game_data.Played_actions[t][i], -noisy_loss, Total_occupancies.back(), Capacities_t );
+                Players[i].Update( Game_data.Played_actions[t], Contexts[t], i , SiouxNetwork_data_original, original_capacities, Capacities_t,  Strategy_vectors);
+            }
+        }
+        double avg_cong = 0;
+        for (int i = 0; i < addit_Congestions.size(); i++) {
+            double sum = 0;
+            for (int j = 0; j < addit_Congestions[i].size(); j++) {
+                sum += addit_Congestions[i][j];
+            }
+            avg_cong += sum / addit_Congestions[i].size();
+        }
+
+        avg_cong /= addit_Congestions.size();
+
+        cout << Players[2].type << " run: " << run+1 << ", time: " << t << ", Avg cong. " << fixed << setprecision(2) << avg_cong << endl;
+
+        return make_tuple(Game_data, Total_occupancies , addit_Congestions);
+
+
+
+*/
+
+
+
+
+/*
 
 
 #include <vector>

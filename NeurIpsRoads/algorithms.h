@@ -7,13 +7,13 @@
 #include <numeric>
 #include <iostream>
 #include <random>
-/*#include <GPy/GPy.hpp>
+/*
+#include <GPy/GPy.hpp>
 #include <GPy/kern/RBF.hpp>
 #include <Eigen/Dense>
 
 using namespace Eigen;*/
 
-using namespace std;
 
 /*
  Player Hedge
@@ -54,6 +54,8 @@ public:
 
     std::vector<double> mixed_strategy();
     int sample_action();
+    void Update(int played_action, vector<vector<double>> total_occupancies, vector<double> payoff, vector<double> Capacities_t);
+
 
 private:
     std::string type;

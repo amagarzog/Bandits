@@ -7,12 +7,12 @@ Player_Hedge::Player_Hedge(int K, double T, double min_payoff, double max_payoff
     max_payoff_(max_payoff),
     weights_(K, 1),
     T_(T),
-    gamma_t_(sqrt(8 * log(K) / T)){
+    gamma_t_(sqrt(8 * log(K) / T)) { // tasa aprendizaje
     type_ = "Hedge";
 }
 
-vector<double> Player_Hedge::mixed_strategy() {
-    vector<double> strategy(K_);
+std::vector<double> Player_Hedge::mixed_strategy() {
+    std::vector<double> strategy(K_);
     // strategy representa la probabilidad de elegir cada accion
     double sum_weights = accumulate(weights_.begin(), weights_.end(), 0.0);
     for (int i = 0; i < K_; i++) {
@@ -22,7 +22,7 @@ vector<double> Player_Hedge::mixed_strategy() {
 }
 
 int Player_Hedge::sample_action() {
-    vector<double> strategy = mixed_strategy();
+    std::vector<double> strategy = mixed_strategy();
     double r = ((double)rand() / RAND_MAX);
     double sum_prob = 0.0;
     for (int i = 0; i < K_; i++) {
@@ -33,6 +33,8 @@ int Player_Hedge::sample_action() {
     }
     return K_ - 1; // In case of numerical errors
 }
+
+
 
 
 std::string Player_Hedge::to_string() const {
@@ -132,7 +134,126 @@ int Player_GPMW::sample_action() {
     return dist(gen);
 }
 
+/*
 
+#include <vector>
+#include <cmath>
+#include <Eigen/Dense>
+#include "GPy/GPy.hpp"
+#include "GPy/kern/GaussianKernel.h"
+
+
+void Update(int played_action, double** total_occupancies, double* payoff, double* Capacities_t) {
+    double beta_t = 0.5;
+    int K = sizeof(self.strategy_vecs) / sizeof(self.strategy_vecs[0]);
+
+    // Append new payoff to history_payoffs
+    double** new_history_payoffs = new double*[self.history_payoffs_row + 1];
+    for(int i=0; i<self.history_payoffs_row; i++) {
+        new_history_payoffs[i] = new double[self.K];
+        for(int j=0; j<self.K; j++) {
+            new_history_payoffs[i][j] = self.history_payoffs[i][j];
+        }
+    }
+    new_history_payoffs[self.history_payoffs_row] = payoff;
+    self.history_payoffs = new_history_payoffs;
+    self.history_payoffs_row += 1;
+
+    // Append new row to history
+    double** new_history = new double*[self.history_row + 1];
+    for(int i=0; i<self.history_row; i++) {
+        new_history[i] = new double[2*self.idx_nonzeros];
+        for(int j=0; j<2*self.idx_nonzeros; j++) {
+            new_history[i][j] = self.history[i][j];
+        }
+    }
+    double* temp = new double[2*self.idx_nonzeros];
+    for(int i=0; i<self.idx_nonzeros; i++) {
+        temp[i] = self.strategy_vecs[played_action][self.idx_nonzeros][i];
+        temp[self.idx_nonzeros+i] = total_occupancies[self.idx_nonzeros][i];
+    }
+    new_history[self.history_row] = temp;
+    self.history = new_history;
+    self.history_row += 1;
+
+    // Create GP Regression model and fix Gaussian noise
+    auto X = Eigen::Map<Eigen::MatrixXd>(self.history[0], self.history_row, 2*self.idx_nonzeros);
+    auto y = Eigen::Map<Eigen::MatrixXd>(self.history_payoffs[0], self.history_payoffs_row, self.K);
+    auto kernel = GPy::RBF(X.cols());
+    auto m = GPy::GPRegression(X, y, kernel);
+    m.Gaussian_noise.fix(std::pow(self.sigma_e, 2));
+
+    // Compute UCB and mean/std estimates for each action
+    double** other_occupancies = new double*[self.idx_nonzeros];
+    for(int i=0; i<self.idx_nonzeros; i++) {
+        other_occupancies[i] = new double[self.K];
+        for(int j=0; j<self.K; j++) {
+            other_occupancies[i][j] = total_occupancies[self.idx_nonzeros][j] - self.strategy_vecs[played_action][self.idx_nonzeros][j];
+        }
+    }
+    double* mu = new double[self.K];
+    double* var = new double[self.K];
+    double* sigma = new double[self.K];
+    for(int a1=0; a1<K; a1++) {
+        double* x1 = new double[self.idx_nonzeros];
+        for(int i=0; i<self.idx_nonzeros; i++) {
+            x1[i] = self.strategy_vecs[a1][self.idx_nonzeros][i];
+        }
+        double* x2 = new double[self.K];
+        for(int i=0; i<self.K; i++) {
+            x2[i] = other_occupancies[i][j] + x1[j];
+        }
+        auto predict_input = Eigen::Map<Eigen::VectorXd>(std::vector<double>(x1, x1 + self.idx_nonzeros).data(), self.idx_nonzeros + self.K);
+        predict_input.segment(self.idx_nonzeros, self.K) = Eigen::MapEigen::VectorXd(x2, self.K);
+        Eigen::VectorXd mu, var;
+        std::tie(mu, var) = m.predict(predict_input);
+
+        double sigma = std::sqrt(std::max(var(0), 1e-6));
+        self.ucb_rewards_est[a1] = mu(0) + beta_t * sigma;
+        self.mean_rewards_est[a1] = mu(0);
+        self.std_rewards_est[a1] = sigma;
+
+        delete[] x1;
+        delete[] x2;
+    }
+
+    double* payoffs = new double[K];
+    for(int a1=0; a1<K; a1++) {
+        payoffs[a1] = self.ucb_rewards_est[a1];
+        payoffs[a1] = std::max(payoffs[a1], self.min_payoff);
+        payoffs[a1] = std::min(payoffs[a1], self.max_payoff);
+    }
+    double* payoffs_scaled = new double[K];
+    for(int a1=0; a1<K; a1++) {
+        payoffs_scaled[a1] = (payoffs[a1] - self.min_payoff) / (self.max_payoff - self.min_payoff);
+    }
+    double* losses = new double[K];
+    for(int a1=0; a1<K; a1++) {
+        losses[a1] = 1.0 - payoffs_scaled[a1];
+        self.cum_losses[a1] += losses[a1];
+    }
+    double* exp_losses = new double[K];
+    for(int a1=0; a1<K; a1++) {
+        exp_losses[a1] = std::exp(-gamma_t * self.cum_losses[a1]);
+    }
+
+    double sum_exp_losses = 0.0;
+    for(int a1=0; a1<K; a1++) {
+        sum_exp_losses += exp_losses[a1];
+    }
+
+    for(int a1=0; a1<K; a1++) {
+        self.weights[a1] = exp_losses[a1] / sum_exp_losses;
+    }
+
+    delete[] payoffs;
+    delete[] payoffs_scaled;
+    delete[] losses;
+    delete[] exp_losses;
+}
+
+
+*/
 
 
 
