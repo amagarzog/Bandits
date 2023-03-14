@@ -7,6 +7,7 @@
 #include <numeric>
 #include <iostream>
 #include <random>
+
 /*
 #include <GPy/GPy.hpp>
 #include <GPy/kern/RBF.hpp>
@@ -18,6 +19,19 @@ using namespace Eigen;*/
 /*
  Player Hedge
 */
+
+/*
+IDEA: herencia player padre del resto de jugadores para tratar todos los jugadores en auxiliar.
+plus: se podría crear un .h y un .cpp para player y otro para cada tipo.
+*/
+class Player {
+public:
+    // habría que meter funciones comunes -> update, mixed strategy, sample action y constructor?
+private:
+    // atributos comunes ?
+    std::string tipo; // tipo de player, puede ser enumerado
+};
+
 
 class Player_Hedge {
 public:

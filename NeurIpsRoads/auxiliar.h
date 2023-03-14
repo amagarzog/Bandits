@@ -5,20 +5,29 @@
 #include <string>
 #include <iostream>
 #include <cmath>
+#include <string>
 #include <random>
 #include "algorithms.h"
 
 class GameData {
 public:
     GameData(int N);
-    std::vector<int> Played_actions;
+    std::vector<std::vector<int>> Played_actions;
     std::vector<std::vector<double>> Mixed_strategies;
     std::vector<double> Incurred_losses;
     std::vector<std::vector<double>> Regrets;
     std::vector<std::vector<double>> Cum_losses;
 };
 
-//void Initialize_Players(int N, vector<string> OD_pairs, vector<vector<vector<double>>> Strategy_vectors, vector<double> min_traveltimes, vector<double> max_traveltimes, vector<int> idxs_controlled, double T, string Algo, int version, vector<double> Sigma, vector<vector<double>> Kernels, vector<double> sigmas, int numberofcontexts, vector<vector<int>> Capacities, vector<Player*>& Players);
+
+// clases a implementar-> luego borrar
+class SiouxNetwork_data_original {};
+class Strategy_vectors {};
+
+void Initialize_Players(int N, std::vector<std::string> OD_pairs, std::vector<std::vector<std::vector<double>>> Strategy_vectors, std::vector<double> min_traveltimes, std::vector<double> max_traveltimes, std::vector<int> idxs_controlled, double T, std::string Algo, int version, std::vector<double> Sigma, std::vector<std::vector<double>> Kernels, std::vector<double> sigmas, int numberofcontexts, std::vector<std::vector<int>> Capacities, std::vector<Player*>& Players);
 
 void Initilize_Players_ini();
+GameData Simulate_Game(int run, std::vector<Player*>& Players, int T, SiouxNetwork_data_original& SiouxNetwork_data_original, Strategy_vectors& Strategy_vectors, std::vector<double>& sigmas, std::vector<std::vector<int>>& Capacities, std::vector<std::vector<double>>& Total_occupancies, std::vector<std::vector<double>>& addit_Congestions, std::vector<int>* Contexts = nullptr);
+
+
 #endif
