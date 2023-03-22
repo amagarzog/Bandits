@@ -1,5 +1,5 @@
 #include "auxiliar.h"
-
+/*
 
 void Initialize_Players(int N, std::vector<std::string> OD_pairs, std::vector<std::vector<std::vector<double>>> Strategy_vectors, std::vector<double> min_traveltimes, std::vector<double> max_traveltimes, std::vector<int> idxs_controlled, double T, std::string Algo, int version, std::vector<double> Sigma, std::vector<std::vector<double>> Kernels, std::vector<double> sigmas, int numberofcontexts, std::vector<std::vector<int>> Capacities, std::vector<Player*>& Players) {
     for (int i = 0; i < N; i++) {
@@ -29,8 +29,9 @@ void Initialize_Players(int N, std::vector<std::string> OD_pairs, std::vector<st
 
 }
 
-GameData Simulate_Game(int run, std::vector<Player*>& Players, int T, SiouxNetwork_data_original& SiouxNetwork_data_original, Strategy_vectors& Strategy_vectors, std::vector<double>& sigmas, std::vector<std::vector<int>>& Capacities, std::vector<std::vector<double>> &Total_occupancies, std::vector<std::vector<double>> &addit_Congestions, std::vector<int>* Contexts = nullptr) {
-    int N = Players.size();
+GameData Simulate_Game(int run, std::vector<Player*>& Players, int T, SiouxNetwork_data_original& SiouxNetwork_data_original, Strategy_vectors& Strategy_vectors, std::vector<double>& sigmas, std::vector<std::vector<int>>& Capacities, std::vector<std::vector<double>>& Total_occupancies, std::vector<std::vector<double>>& addit_Congestions, std::vector<int>* Contexts)
+{
+   int N = Players.size();
     GameData Game_data(N);
     for (int i = 0; i < N; ++i) {
         // cum loses sera N X K
@@ -49,7 +50,7 @@ GameData Simulate_Game(int run, std::vector<Player*>& Players, int T, SiouxNetwo
                 Players[i]->Compute_strategy(Capacities_t);
             }
             played_actions_t[i] = Players[i]->sample_action();
-            */
+            
 
         }
         Game_data.Played_actions[t] = played_actions_t;
@@ -62,7 +63,7 @@ GameData Simulate_Game(int run, std::vector<Player*>& Players, int T, SiouxNetwo
         for (int i = 0; i < N; ++i) {
             /*for (int j = 0; j < Strategy_vectors[i].size(); ++j) {
                 Total_occupancies[t][j] += Strategy_vectors[i][Game_data.Played_actions[t][i]][j];
-            }*/
+            
         }
 
         std::vector<double> congestions(Capacities_t.size(), 0.0);
@@ -87,7 +88,7 @@ GameData Simulate_Game(int run, std::vector<Player*>& Players, int T, SiouxNetwo
                  double noisy_loss = Game_data.Incurred_losses[t][i] + normal_distribution<double>(0, sigmas[i])(rng);
                  Players[i].Update_history(Game_data.Played_actions[t][i], -noisy_loss, Total_occupancies.back(), Capacities_t);
              }
-             */
+             
         }
 
 

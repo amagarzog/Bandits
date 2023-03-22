@@ -68,7 +68,7 @@ public:
 
     std::vector<double> mixed_strategy();
     int sample_action();
-    void Update(int played_action, vector<vector<double>> total_occupancies, vector<double> payoff, vector<double> Capacities_t);
+    void Update(int played_action, std::vector<std::vector<double>> total_occupancies, std::vector<double> payoff, std::vector<double> Capacities_t);
 
 
 private:
