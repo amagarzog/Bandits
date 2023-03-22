@@ -13,9 +13,6 @@ void print(std::vector<std::vector<std::string>> d) {
 
 int main() {
     NetworkData network = createNetwork();
-    //std::vector<std::vector<std::string>> data = read_csv("SiouxFalls_node.csv");
-    //print(data);
-    //Initilize_Players_ini(); 
-
+    std::vector<std::vector<OD_Demand>> od_Demands = createOD_Demands(); //Es una matriz cuadrada que relaciona las demandas de un nodo i (fila) a un nodo j (columna)
     return 0;
 }
