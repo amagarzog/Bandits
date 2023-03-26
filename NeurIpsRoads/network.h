@@ -6,6 +6,12 @@
 #include <sstream>
 #include <algorithm>
 #include <iterator>
+#include <queue>
+#include <limits>
+
+
+const int NUM_NODOS = 24;
+const int K = 5; // max num routes
 
 typedef int NodoIzquierdo;
 typedef int NodoDerecho;
@@ -28,26 +34,36 @@ typedef struct
 
 class NetworkData {
 public:
-    // Los vectores en python eran matrices que había que hacerles reshape para poder trabajar con ellas commo si fueran vectores.
-    // Entonces hay que ver en el "repeated_routing.py" como almacena los datos en matrices para almacenarlos, esta vez, en vectores. 
-    NetworkData(std::vector<Nodo> n, std::vector<Carretera> c, std::vector<std::vector<int>> OD_Demands);
+    NetworkData(std::vector<Nodo> n, std::vector<Carretera> c);
 
-private:
+//private:
     std::vector<Nodo> nodos;
     std::vector<Carretera> carreteras;
-    std::vector<std::vector<int>> OD_Demands;
 };
 
+struct NodoConDistancia
+{
+    int nodo;
+    int distancia;
+
+    bool operator<(const NodoConDistancia& other) const
+    {
+        return distancia > other.distancia;
+    }
+};
 
 std::vector<std::vector<std::string>> read_csv(std::string filename);
 NetworkData createNetwork();
+std::vector<std::vector<int>> takeDemands();
 std::vector<Nodo> crearListaNodos(std::vector<std::vector<std::string>> datosNodos);
 std::vector<Carretera> crearListaCarreteras(std::vector<std::vector<std::string>> datosCarreteras);
 std::vector<std::vector<int>> crearListaDemandas(std::vector<std::vector<std::string>> datosDemandas);
-std::vector<std::vector<int>> computeStrategyVectors(std::vector<std::vector<int>>& OD_pares, NetworkData network);
+std::vector<std::vector<int>> computeStrategyVectors(std::vector<std::vector<int>>& OD_Demands, NetworkData network);
 
 
 
 // Aux
 void printNodos(std::vector<Nodo> n);
 void printCarreteras(std::vector<Carretera> c);
+
+std::vector<std::vector<int>> dijkstra(NetworkData network, int origen, int destino, int K);

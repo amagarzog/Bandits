@@ -1,0 +1,71 @@
+std::vector<int> dijkstra(NetworkData& network, int origen, int destino, int K)
+{
+    int n = network.nodos.size();
+    std::vector<std::vector<std::pair<int, int>>> grafo(n);
+    std::vector<int> dist(n, std::numeric_limits<int>::max());
+    std::vector<int> prev(n, -1);
+
+    for (int i = 0; i < network.carreteras.size(); i++)
+    {
+        int u = network.carreteras[i].init_node - 1;
+        int v = network.carreteras[i].term_node - 1;
+        int peso = network.carreteras[i].freeFlowTime;
+
+        grafo[u].push_back(std::make_pair(v, peso));
+    }
+
+    std::priority_queue<NodoConDistancia> pq;
+    pq.push({ origen - 1, 0 });
+    dist[origen - 1] = 0;
+
+    while (!pq.empty())
+    {
+        NodoConDistancia actual = pq.top();
+        pq.pop();
+
+        if (actual.nodo == destino - 1)
+        {
+            break;
+        }
+
+        if (actual.distancia > dist[actual.nodo])
+        {
+            continue;
+        }
+
+        for (auto vecino : grafo[actual.nodo])
+        {
+            int v = vecino.first;
+            int peso = vecino.second;
+
+            int nuevaDistancia = actual.distancia + peso;
+            if (nuevaDistancia < dist[v])
+            {
+                dist[v] = nuevaDistancia;
+                prev[v] = actual.nodo;
+
+                pq.push({ v, nuevaDistancia });
+            }
+        }
+    }
+
+    std::vector<int> camino;
+    int u = destino - 1;
+    while (u != -1)
+    {
+        camino.push_back(u);
+        u = prev[u];
+    }
+
+    std::reverse(camino.begin(), camino.end());
+
+    if (K > camino.size() - 1)
+    {
+        return camino;
+    }
+    else
+    {
+        std::vector<int> subcamino(camino.begin(), camino.begin() + K + 1);
+        return subcamino;
+    }
+}
