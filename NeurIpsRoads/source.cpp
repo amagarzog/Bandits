@@ -1,5 +1,4 @@
 #include "network.h"
-#include "auxiliar.h"
 
 
 int main() {

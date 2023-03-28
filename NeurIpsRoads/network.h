@@ -1,4 +1,5 @@
-#pragma once
+#ifndef network_h
+#define network_h
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -8,13 +9,34 @@
 #include <iterator>
 #include <queue>
 #include <limits>
+#include <utility>
+#include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/dijkstra_shortest_paths.hpp>
+#include <boost/graph/iteration_macros.hpp>
+#include <boost/graph/iteration_macros.hpp>
+#include <boost/graph/graph_traits.hpp>
 
+
+using namespace boost;
 
 const int NUM_NODOS = 24;
-const int K = 5; // max num routes
+
+
+typedef adjacency_list<vecS, vecS, directedS,
+    no_property, property<edge_weight_t, int> > Graph;
+typedef graph_traits<Graph>::vertex_descriptor Vertex;
+
+typedef graph_traits<Graph>::edge_descriptor Edge;
+
+
+typedef std::pair<int, int> EdgeWeight;
+
+
+
 
 typedef int NodoIzquierdo;
 typedef int NodoDerecho;
+
 
 typedef struct 
 {
@@ -41,16 +63,8 @@ public:
     std::vector<Carretera> carreteras;
 };
 
-struct NodoConDistancia
-{
-    int nodo;
-    int distancia;
 
-    bool operator<(const NodoConDistancia& other) const
-    {
-        return distancia > other.distancia;
-    }
-};
+
 
 std::vector<std::vector<std::string>> read_csv(std::string filename);
 NetworkData createNetwork();
@@ -66,4 +80,7 @@ std::vector<std::vector<int>> computeStrategyVectors(std::vector<std::vector<int
 void printNodos(std::vector<Nodo> n);
 void printCarreteras(std::vector<Carretera> c);
 
-std::vector<std::vector<int>> dijkstra(NetworkData network, int origen, int destino, int K);
+void dijkstra(const NetworkData& red, int nodoOrigen, std::vector<float>& distancias, std::vector<std::vector<int>>& caminos);
+std::vector<std::vector<std::vector<int>>> k_shortest_paths(const NetworkData& red, int k);
+
+#endif
