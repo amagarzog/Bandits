@@ -87,6 +87,11 @@ public:
 	{
 		out_stream << m_nID;
 	}
+
+	int Report()
+	{
+		return m_nID;
+	}
 };
 
 
@@ -155,5 +160,16 @@ public:
 			out_stream << "->";
 		}
 		out_stream << std::endl <<  "*********************************************" << std::endl;
+	}
+
+	// report the content
+	void Report(std::vector<std::vector<int>>& paths) const
+	{
+		std::vector<int> path;
+		for (std::vector<BaseVertex*>::const_iterator pos = m_vtVertexList.begin(); pos != m_vtVertexList.end(); ++pos)
+		{
+			path.push_back((*pos)->Report());
+		}
+		paths.push_back(path);
 	}
 };

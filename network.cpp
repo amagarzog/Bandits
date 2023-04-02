@@ -1,5 +1,11 @@
 #include "network.h"
-#include <queue>
+
+//includes para el algoritmo k_shortest_paths
+
+#include "GraphElements.h"
+#include "Graph.h"
+#include "DijkstraShortestPathAlg.h"
+#include "YenTopKShortestPathsAlg.h"
 
 std::vector<std::vector<int>> read_csv_toInteger(std::string filename) {
     std::ifstream archivo_csv(filename);
@@ -130,7 +136,7 @@ std::vector<std::vector<OD_Demand>> createOD_Demands() {
     return od_Demands;
 }
 
-void computeStrategyVectors(NetworkData& network, const std::vector<std::vector<OD_Demand>>& od_Demands, const int numRoutes = 5,  const int multFactor = 3) {
+void computeStrategyVectors(const NetworkData& network, const std::vector<std::vector<OD_Demand>>& od_Demands,  int numRoutes, int multFactor) {
     std::vector<std::pair<int, int>> od_Pairs;
     std::vector<int> demands;
 
@@ -145,13 +151,12 @@ void computeStrategyVectors(NetworkData& network, const std::vector<std::vector<
     
     int E = network.getNumCarreteras(); //esto hace que no pueda poner const en el param network
     //int K = numRoutes;
-    std::vector<std::vector<int>> strategyVector(od_Pairs.size()); // o vector<vector<vector<double>>> Strategy_vectors(OD_pairs.size());
+    std::vector<std::vector<std::vector<int>>> strategyVector(od_Pairs.size()); // o vector<vector<vector<double>>> Strategy_vectors(OD_pairs.size());
     for (int i = 0; i < od_Pairs.size(); i++) {
         strategyVector.resize(numRoutes);
-        //std::vector<std::vector<int>> paths = k_shortest_paths(network, od_Pairs[i].first, od_Pairs[i].second, numRoutes, "weight");
-        //std::cout << OD_Pair[i].first << OD_Pair[i].second << std::endl;
+        std::vector<std::vector<int>> k_shortest_paths_between_od_pairs = k_shortest_paths(network, od_Pairs[i].first, od_Pairs[i].second, numRoutes);
+        strategyVector.push_back(k_shortest_paths_between_od_pair);
     }
-    //std::vector<std::vector<int>> path = dijkstra(network, 1, 4, 5);
 
     /*int E = Edges.size();
     int K = num_routes;
@@ -182,6 +187,25 @@ void computeStrategyVectors(NetworkData& network, const std::vector<std::vector<
         
 }
 
+std::vector<std::vector<int>> k_shortest_paths(const NetworkData& network, const int& init_node, const int& term_node, const int& k_paths)
+{
+    Graph my_graph(network);
+
+    YenTopKShortestPathsAlg yenAlg(my_graph, my_graph.get_vertex(init_node),
+        my_graph.get_vertex(term_node));
+
+
+    int i = 0;
+    std::vector<std::vector<int>> paths;
+    while (yenAlg.has_next() && i < k_paths)
+    {
+        ++i;
+        yenAlg.next()->Report(paths);
+    }
+
+    return paths;
+}
+
 
 
 /*def Compute_Strategy_vectors(OD_demands, Freeflowtimes, Networkx, Edges, num_routes = 5, mult_factor = None):
@@ -204,6 +228,7 @@ void computeStrategyVectors(NetworkData& network, const std::vector<std::vector<
         Strategy_vectors[i] = list()
         OD_pair = np.array(OD_pairs[i])
         paths = k_shortest_paths(Networkx, str(OD_pair[0]), str(OD_pair[1]), K, weight = 'weight')
+        TODO
         for a in range(len(paths)):
             vec = np.zeros((E,1))
             for n in range(len(paths[a])-1):
