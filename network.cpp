@@ -154,7 +154,7 @@ void computeStrategyVectors(const NetworkData& network, const std::vector<std::v
     std::vector<std::vector<std::vector<int>>> strategyVector(od_Pairs.size()); // o vector<vector<vector<double>>> Strategy_vectors(OD_pairs.size());
     for (int i = 0; i < od_Pairs.size(); i++) {
         strategyVector.resize(numRoutes);
-        std::vector<std::vector<int>> k_shortest_paths_between_od_pairs = k_shortest_paths(network, od_Pairs[i].first, od_Pairs[i].second, numRoutes);
+        std::vector<std::vector<int>> k_shortest_paths_between_od_pair = k_shortest_paths(network, od_Pairs[i].first, od_Pairs[i].second, numRoutes);
         strategyVector.push_back(k_shortest_paths_between_od_pair);
     }
 
