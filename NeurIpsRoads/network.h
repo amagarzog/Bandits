@@ -8,28 +8,19 @@
 #include <algorithm>
 #include <iterator>
 #include <queue>
-#include <limits>
 #include <utility>
-#include <boost/graph/adjacency_list.hpp>
-#include <boost/graph/dijkstra_shortest_paths.hpp>
-#include <boost/graph/iteration_macros.hpp>
-#include <boost/graph/iteration_macros.hpp>
-#include <boost/graph/graph_traits.hpp>
+#include <limits>
+#include <set>
+#include <map>
+#include <string>
+#include "GraphElements.h"
+#include "Graph.h"
+#include "DijkstraShortestPathAlg.h"
+#include "YenTopKShortestPathsAlg.h"
 
-
-using namespace boost;
+using namespace std;
 
 const int NUM_NODOS = 24;
-
-
-typedef adjacency_list<vecS, vecS, directedS,
-    no_property, property<edge_weight_t, int> > Graph;
-typedef graph_traits<Graph>::vertex_descriptor Vertex;
-
-typedef graph_traits<Graph>::edge_descriptor Edge;
-
-
-typedef std::pair<int, int> EdgeWeight;
 
 
 
@@ -49,7 +40,7 @@ typedef struct
     int init_node;
     int term_node;
     float capacity;
-    int lenght;
+    int length;
     int freeFlowTime;
     int power;
 } Carretera;
@@ -73,14 +64,11 @@ std::vector<Nodo> crearListaNodos(std::vector<std::vector<std::string>> datosNod
 std::vector<Carretera> crearListaCarreteras(std::vector<std::vector<std::string>> datosCarreteras);
 std::vector<std::vector<int>> crearListaDemandas(std::vector<std::vector<std::string>> datosDemandas);
 std::vector<std::vector<int>> computeStrategyVectors(std::vector<std::vector<int>>& OD_Demands, NetworkData network);
-
-
+void testYenAlg(int source, int dest, std::vector<Carretera> listaCarreteras);
 
 // Aux
 void printNodos(std::vector<Nodo> n);
 void printCarreteras(std::vector<Carretera> c);
 
-void dijkstra(const NetworkData& red, int nodoOrigen, std::vector<float>& distancias, std::vector<std::vector<int>>& caminos);
-std::vector<std::vector<std::vector<int>>> k_shortest_paths(const NetworkData& red, int k);
 
 #endif

@@ -1,71 +1,203 @@
-std::vector<int> dijkstra(NetworkData& network, int origen, int destino, int K)
-{
-    int n = network.nodos.size();
-    std::vector<std::vector<std::pair<int, int>>> grafo(n);
-    std::vector<int> dist(n, std::numeric_limits<int>::max());
-    std::vector<int> prev(n, -1);
 
-    for (int i = 0; i < network.carreteras.size(); i++)
-    {
-        int u = network.carreteras[i].init_node - 1;
-        int v = network.carreteras[i].term_node - 1;
-        int peso = network.carreteras[i].freeFlowTime;
+/*
 
-        grafo[u].push_back(std::make_pair(v, peso));
-    }
 
-    std::priority_queue<NodoConDistancia> pq;
-    pq.push({ origen - 1, 0 });
-    dist[origen - 1] = 0;
+std::vector<std::vector<int>> k_shortest_paths(adjacency_list<vecS, vecS, directedS, no_property, property<edge_weight_t, int> >& G, vertex_descriptor source, vertex_descriptor target, int k) {
+    std::vector<std::vector<int>> result;
 
-    while (!pq.empty())
-    {
-        NodoConDistancia actual = pq.top();
+    typedef std::pair<int, int> WeightAndVertex;
+    std::priority_queue<WeightAndVertex, std::vector<WeightAndVertex>, std::greater<WeightAndVertex>> pq;
+
+    std::vector<int> distance(num_vertices(G), std::numeric_limits<int>::max());
+    std::vector<int> prev(num_vertices(G), -1);
+    std::vector<int> index(num_vertices(G));
+
+    pq.push(std::make_pair(0, source));
+    distance[source] = 0;
+
+    while (!pq.empty()) {
+        int dist = pq.top().first;
+        int u = pq.top().second;
         pq.pop();
 
-        if (actual.nodo == destino - 1)
-        {
-            break;
+        if (u == target) {
+            std::vector<int> path;
+            int v = u;
+            while (v != source) {
+                path.push_back(v);
+                v = prev[v];
+            }
+            path.push_back(source);
+            std::reverse(path.begin(), path.end());
+            result.push_back(path);
+            if (result.size() == k) {
+                break;
+            }
         }
 
-        if (actual.distancia > dist[actual.nodo])
-        {
-            continue;
-        }
+        if (dist <= distance[u]) {
+            BOOST_FOREACH(Edge e, out_edges(u, G)) {
+                Vertex v = target(e, G);
+                int weight = get(boost::edge_weight, G, e);
 
-        for (auto vecino : grafo[actual.nodo])
-        {
-            int v = vecino.first;
-            int peso = vecino.second;
-
-            int nuevaDistancia = actual.distancia + peso;
-            if (nuevaDistancia < dist[v])
-            {
-                dist[v] = nuevaDistancia;
-                prev[v] = actual.nodo;
-
-                pq.push({ v, nuevaDistancia });
+                if (distance[u] + weight < distance[v]) {
+                    distance[v] = distance[u] + weight;
+                    prev[v] = u;
+                    pq.push(std::make_pair(distance[v], v));
+                }
             }
         }
     }
 
-    std::vector<int> camino;
-    int u = destino - 1;
-    while (u != -1)
-    {
-        camino.push_back(u);
-        u = prev[u];
-    }
-
-    std::reverse(camino.begin(), camino.end());
-
-    if (K > camino.size() - 1)
-    {
-        return camino;
-    }
-    else
-    {
-        std::vector<int> subcamino(camino.begin(), camino.begin() + K + 1);
-        return subcamino;
-    }
+    return result;
 }
+
+
+/*
+
+std::vector<std::vector<int>> k_shortest_paths(adjacency_list<vecS, vecS, directedS, no_property, property<edge_weight_t, int> >& G, vertex_descriptor source, vertex_descriptor target, int k) {
+    std::vector<std::vector<int>> result;
+
+    // calculate the shortest path from source to target
+    std::vector<Vertex> path;
+    dijkstra_shortest_paths(G, source,
+        predecessor_map(make_iterator_property_map(
+            path.begin(), get(vertex_index, G))));
+
+    // initialize a priority queue to store candidate paths
+    std::priority_queue<std::vector<int>, std::vector<std::vector<int>>,
+        std::greater<std::vector<int>>> candidates;
+
+    // add the shortest path as the first candidate
+    std::vector<int> shortest_path;
+    for (int i = 0; i < path.size(); i++) {
+        shortest_path.push_back(path[i]);
+    }
+    candidates.push(shortest_path);
+
+    // iterate until kth shortest path is found or there are no more candidates
+    while (!candidates.empty() && result.size() < k) {
+        std::vector<int> candidate = candidates.top();
+        candidates.pop();
+
+        // check if the candidate path reaches the target
+        if (candidate.back() == G[target]) {
+            result.push_back(candidate);
+        }
+
+        // generate new candidates by removing edges from the candidate path
+        BOOST_FOREACH(Graph::edge_descriptor edge, edges(G)) {
+        BOOST_FOREACH(graph_traits<adjacency_list<vecS, vecS, directedS, no_property, property<edge_weight_t, int> > >::edge_descriptor edge, edges(G)) {
+            vertex_descriptor u = source(edge, G);
+            vertex_descriptor v = target(edge, G);
+            if (candidate.size() >= 2 && candidate[candidate.size() - 2] == u
+                && candidate.back() == v) {
+                // remove the edge and add the new candidate
+                std::vector<int> new_candidate = candidate;
+                new_candidate.pop_back();
+                new_candidate.back() = u;
+                dijkstra_shortest_paths(G, u,
+                    predecessor_map(make_iterator_property_map(
+                        new_candidate.begin(), get(vertex_index, G))));
+                candidates.push(new_candidate);git
+            }
+        }
+    }
+
+    return result;
+}
+
+
+
+
+
+
+
+
+
+
+
+/*
+std::vector<std::vector<int>> dijkstra(NetworkData network, int origen, int destino, int K) {
+    std::vector<std::vector<int>> caminos;
+  
+   /* std::priority_queue<NodoConDistancia> cola;
+    std::vector<int> distancias(network.nodos.size(), std::numeric_limits<int>::max());
+    std::vector<bool> visitados(network.nodos.size(), false);
+    std::vector<std::vector<int>> antecesores(network.nodos.size());
+    std::vector<int> auxpos(network.nodos.size(), 0);
+
+
+    cola.push({ origen, 0 });
+    distancias[origen - 1] = 0;
+
+    while (!cola.empty()) {
+        NodoConDistancia actual = cola.top();
+        cola.pop();
+        std::cout << actual.nodo << std::endl;
+
+
+        if (actual.nodo == 5) {// || actual.nodo == 11 || actual.nodo == 3) {
+            int a;
+            a = 23;
+        }
+
+        if (actual.nodo == destino && caminos.size() < K) {
+            std::vector<int> camino;
+            int nodoActual = destino;
+            while (nodoActual != origen) {
+                camino.push_back(nodoActual);
+                int ind = auxpos[nodoActual - 1];
+                nodoActual = antecesores[nodoActual - 1][ind];
+            }
+            camino.push_back(origen);
+            //reverse(camino.begin(), camino.end());
+            caminos.push_back(camino);
+            if (caminos.size() == K) {
+                break;
+            }
+        }
+
+        for (int i = 0; i < network.carreteras.size(); i++) {
+            Carretera carretera = network.carreteras[i];
+            if (carretera.init_node == actual.nodo) {
+                int nodoVecino = carretera.term_node;
+                int nuevaDistancia = distancias[actual.nodo - 1] + carretera.lenght;
+                if (nuevaDistancia < distancias[nodoVecino - 1]) {
+                    distancias[nodoVecino - 1] = nuevaDistancia;
+                    cola.push({ nodoVecino, nuevaDistancia });
+                    //antecesores[nodoVecino-1].clear();
+                    antecesores[nodoVecino - 1].push_back(actual.nodo);
+                    if (destino == nodoVecino) {
+                        auxpos[nodoVecino - 1] = antecesores[nodoVecino - 1].size() - 1;
+                    }
+                }
+                else if (nuevaDistancia == distancias[nodoVecino - 1]) {
+                    antecesores[nodoVecino - 1].push_back(actual.nodo);
+                }
+            }
+        }
+
+    }
+    
+    return caminos;
+}
+
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
