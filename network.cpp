@@ -148,8 +148,7 @@ int getidx(const NetworkData& network, int nodo1, int nodo2) {
 }
 
 
-std::vector<std::vector<int>> computeStrategyVectors(const NetworkData& network, const std::vector<std::vector<OD_Demand>>& od_Demands,  int numRoutes, int multFactor) {
-    std::vector<std::pair<int, int>> od_Pairs;
+std::vector<std::vector<int>> computeStrategyVectors(const NetworkData& network, std::vector<std::vector<OD_Demand>>& od_Demands, std::vector<std::pair<int, int>>& od_Pairs, int numRoutes, int multFactor) {
     std::vector<int> demands;
 
     for (int i = 0; i < NUM_NODOS; i++) {
@@ -198,11 +197,10 @@ std::vector<std::vector<int>> computeStrategyVectors(const NetworkData& network,
         if (a == 0) {
             Strategy_vectors.push_back(strategyvec);
         }
-        else if (dot_product(strategyvec, Freeflowtimes) < 1*dot_product(Strategy_vectors[0], Freeflowtimes)) {
+        else if (dot_product(strategyvec, Freeflowtimes) < multFactor*dot_product(Strategy_vectors[0], Freeflowtimes)) {
             Strategy_vectors.push_back(strategyvec);
         }
     }
-    int agsdgf = 54;
     return Strategy_vectors;
 }
 
@@ -253,3 +251,46 @@ void printOD_Demands(std::vector<std::vector<OD_Demand>> d) {
         std::cout << std::endl;
     }
 }
+
+
+/*
+std::vector<double> Compute_traveltimes(const NetworkData& networkData, const std::vector<std::vector<int>>& Strategy_vectors, const std::vector<int>& played_actions, int player_id, const std::vector<double>& Capacities) {
+    int N = Strategy_vectors.size(); // number of players
+    std::vector<double> Total_occupancies(Strategy_vectors[0].size(), 0.0);
+    for (int i = 0; i < N; ++i) {
+        for (size_t j = 0; j < Strategy_vectors[0].size(); ++j) {
+            Total_occupancies[j] += Strategy_vectors[i][played_actions[i]] * Capacities[j];
+        }
+    }
+    std::vector<Carretera> carreteras = networkData.getCarreteras();
+    int E = carreteras.size();
+    std::vector<double> a(E, 0.0);
+    for (int i = 0; i < E; ++i) {
+        a[i] = carreteras[i].freeFlowTime;
+    }
+    std::vector<double> b(E, 0.0);
+    for (int i = 0; i < E; ++i) {
+        b[i] = a[i] * 0.15 / std::pow(Capacities[i], carreteras[i].power);
+    }
+    std::vector<double> unit_times(E, 0.0);
+    for (int i = 0; i < E; ++i) {
+        unit_times[i] = a[i] + b[i] * std::pow(Total_occupancies[i], carreteras[i].power);
+    }
+    std::vector<double> Traveltimes(N, 0.0);
+    if (player_id == -1) {
+        for (int i = 0; i < N; ++i) {
+            double X_i = Strategy_vectors[i][played_actions[i]];
+            for (int j = 0; j < E; ++j) {
+                Traveltimes[i] += X_i * unit_times[j];
+            }
+        }
+    }
+    else {
+        double X_i = Strategy_vectors[player_id][played_actions[player_id]];
+        for (int j = 0; j < E; ++j) {
+            Traveltimes[0] += X_i * unit_times[j];
+        }
+    }
+    return Traveltimes;
+}
+*/

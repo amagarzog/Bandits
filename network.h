@@ -59,15 +59,7 @@ private:
     std::vector<Carretera> carreteras;
 };
 
-typedef struct
-{
-    /*int init_node;
-    int term_node;
-    float capacity;
-    int lenght;
-    int freeFlowTime;
-    int power;*/
-} Strategy;
+// poner como metodos de la clase network data
 
 //Create Network
 NetworkData createNetwork();
@@ -76,7 +68,7 @@ std::vector<Carretera> crearListaCarreteras(const std::vector<std::vector<std::s
 
 // Compute Strategy Vectors
 std::vector<std::vector<OD_Demand>> createOD_Demands();
-std::vector<std::vector<int>> computeStrategyVectors(const NetworkData & network, const std::vector<std::vector<OD_Demand>> & od_Demands, int numRoutes, int multFactor);
+std::vector<std::vector<int>> computeStrategyVectors(const NetworkData & network, std::vector<std::vector<OD_Demand>> & od_Demands, std::vector<std::pair<int, int>> &od_Pairs, int numRoutes, int multFactor);
 int get_edge_idx(std::vector<Carretera>);
 std::vector<std::vector<int>> k_shortest_paths(const NetworkData& network, const int& init_node, const int& term_node, const int& k_paths);
 int getidx(const NetworkData& network, int nodo1, int nodo2);
