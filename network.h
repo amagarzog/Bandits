@@ -78,6 +78,8 @@ std::vector<std::vector<OD_Demand>> createOD_Demands();
 void computeStrategyVectors(const NetworkData & network, const std::vector<std::vector<OD_Demand>> & od_Demands, int numRoutes, int multFactor);
 int get_edge_idx(std::vector<Carretera>);
 std::vector<std::vector<int>> k_shortest_paths(const NetworkData& network, const int& init_node, const int& term_node, const int& k_paths);
+int getidx(const NetworkData& network, int nodo1, int nodo2);
+int dot_product(std::vector<int> vec1, std::vector<int> vec2);
 
 
 

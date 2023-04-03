@@ -136,6 +136,18 @@ std::vector<std::vector<OD_Demand>> createOD_Demands() {
     return od_Demands;
 }
 
+int getidx(const NetworkData& network, int nodo1, int nodo2) {
+    int idx = 0;
+    std::vector<Carretera> carrs = network.getCarreteras();
+    for (int i = 0; i < carrs.size(); i++) {
+        if (carrs[i].init_node == nodo1 && carrs[i].term_node == nodo2) {
+            idx = i;
+        }
+    }
+    return idx;
+}
+
+
 void computeStrategyVectors(const NetworkData& network, const std::vector<std::vector<OD_Demand>>& od_Demands,  int numRoutes, int multFactor) {
     std::vector<std::pair<int, int>> od_Pairs;
     std::vector<int> demands;
@@ -150,13 +162,57 @@ void computeStrategyVectors(const NetworkData& network, const std::vector<std::v
     }
     
     int E = network.getNumCarreteras(); //esto hace que no pueda poner const en el param network
-    //int K = numRoutes;
-    std::vector<std::vector<std::vector<int>>> strategyVector(od_Pairs.size()); // o vector<vector<vector<double>>> Strategy_vectors(OD_pairs.size());
+    std::vector<std::vector<std::vector<int>>> paths(od_Pairs.size()); 
     for (int i = 0; i < od_Pairs.size(); i++) {
-        strategyVector.resize(numRoutes);
         std::vector<std::vector<int>> k_shortest_paths_between_od_pair = k_shortest_paths(network, od_Pairs[i].first, od_Pairs[i].second, numRoutes);
-        strategyVector.push_back(k_shortest_paths_between_od_pair);
+        paths[i] = k_shortest_paths_between_od_pair;
     }
+    std::vector<std::vector<int>> Strategy_vectors;
+    for (int a = 0; a < paths.size(); ++a) {
+        std::vector<int> vec(E, 0);
+        std::vector<std::vector<int>> pathtmp = paths[a];
+        for (int n = 0; n < pathtmp.size(); ++n) { // 5 caminos
+            std::vector<int> kpath = pathtmp[n];
+            for (int d = 0; d < kpath.size()-1; d++) { // nodos de cada camino (de los 5)
+                int idx = getidx(network, kpath[d], kpath[d+1]);
+                vec[idx] = 1; // se marca la carretera entre los dos nodos
+            }
+        }
+        std::vector<int> strategyvec(E, 0);
+        std::vector<Carretera> carreteras = network.getCarreteras();
+        std::vector<int> Freeflowtimes(E);
+        for (int j = 0; j < E; j++) { //  TODO MEJORAR RENDIMIENTO (unordered map odpairs)
+            if (vec[j] == 1) {
+                bool done = false;
+                for (int i = 0; i < od_Pairs.size() && !done; i++) {
+                    if (od_Pairs[i].first == carreteras[j].init_node && od_Pairs[i].second == carreteras[j].term_node) {
+                        done = true;
+                        strategyvec[j] = demands[i];
+                    }
+                }
+
+            }
+            Freeflowtimes[j] = carreteras[j].freeFlowTime;
+        }
+
+        if (a == 0) {
+            Strategy_vectors.push_back(strategyvec);
+        }
+        else if (dot_product(strategyvec, Freeflowtimes) < 1*dot_product(Strategy_vectors[0], Freeflowtimes)) {
+            Strategy_vectors.push_back(strategyvec);
+        }
+
+        // return strategyvectos
+    }
+
+    int dot_product(std::vector<int> vec1, std::vector<int> vec2) {
+        int result = 0.0;
+        for (int i = 0; i < vec1.size(); i++) {
+            result += vec1[i] * vec2[i];
+        }
+        return result;
+    }
+
 
     /*int E = Edges.size();
     int K = num_routes;
