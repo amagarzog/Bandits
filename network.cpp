@@ -148,7 +148,7 @@ int getidx(const NetworkData& network, int nodo1, int nodo2) {
 }
 
 
-void computeStrategyVectors(const NetworkData& network, const std::vector<std::vector<OD_Demand>>& od_Demands,  int numRoutes, int multFactor) {
+std::vector<std::vector<int>> computeStrategyVectors(const NetworkData& network, const std::vector<std::vector<OD_Demand>>& od_Demands,  int numRoutes, int multFactor) {
     std::vector<std::pair<int, int>> od_Pairs;
     std::vector<int> demands;
 
@@ -201,46 +201,17 @@ void computeStrategyVectors(const NetworkData& network, const std::vector<std::v
         else if (dot_product(strategyvec, Freeflowtimes) < 1*dot_product(Strategy_vectors[0], Freeflowtimes)) {
             Strategy_vectors.push_back(strategyvec);
         }
-
-        // return strategyvectos
     }
+    int agsdgf = 54;
+    return Strategy_vectors;
+}
 
-    int dot_product(std::vector<int> vec1, std::vector<int> vec2) {
-        int result = 0.0;
-        for (int i = 0; i < vec1.size(); i++) {
-            result += vec1[i] * vec2[i];
-        }
-        return result;
+int dot_product(std::vector<int> vec1, std::vector<int> vec2) {
+    int result = 0.0;
+    for (int i = 0; i < vec1.size(); i++) {
+        result += vec1[i] * vec2[i];
     }
-
-
-    /*int E = Edges.size();
-    int K = num_routes;
-    vector<vector<vector<double>>> Strategy_vectors(OD_pairs.size());
-    for (int i = 0; i < OD_pairs.size(); ++i) {
-        Strategy_vectors[i].resize(K);
-        Matrix OD_pair = { {OD_pairs[i][0]}, {OD_pairs[i][1]} };
-        vector<vector<string>> paths = k_shortest_paths(Networkx, to_string(OD_pair[0][0]), to_string(OD_pair[1][0]), K, "weight");
-        for (int a = 0; a < paths.size(); ++a) {
-            vector<double> vec(E, 0);
-            for (int n = 0; n < paths[a].size() - 1; ++n) {
-                int idx = get_edge_idx(Edges, stoi(paths[a][n]), stoi(paths[a][n + 1]));
-                vec[idx] = 1;
-            }
-            vector<double> strategy_vec(E);
-            transform(vec.begin(), vec.end(), strategy_vec.begin(), [&](double x) { return x * Demands[i]; });
-            if (a == 0) {
-                Strategy_vectors[i][0] = strategy_vec;
-            }
-            else if (inner_product(strategy_vec.begin(), strategy_vec.end(), Freeflowtimes[0].begin(), 0.0) < multipl_factor * inner_product(Strategy_vectors[i][0].begin(), Strategy_vectors[i][0].end(), Freeflowtimes[0].begin(), 0.0)) {
-                Strategy_vectors[i][a] = strategy_vec;
-            }
-        }
-    }*/
-
-
-    //return strategyVector;
-        
+    return result;
 }
 
 std::vector<std::vector<int>> k_shortest_paths(const NetworkData& network, const int& init_node, const int& term_node, const int& k_paths)
@@ -261,43 +232,6 @@ std::vector<std::vector<int>> k_shortest_paths(const NetworkData& network, const
 
     return paths;
 }
-
-
-
-/*def Compute_Strategy_vectors(OD_demands, Freeflowtimes, Networkx, Edges, num_routes = 5, mult_factor = None):
-    if mult_factor is None:
-        multipl_factor = 3
-    else:
-        multipl_factor = mult_factor
-    OD_pairs = []
-    Demands = []
-    for i in range(24):
-        for j in range(24):
-            if OD_demands[i, j] > 0:
-                OD_pairs.append([i + 1, j + 1])
-                Demands.append(OD_demands[i, j] / 100)
-
-    E = len(Edges)
-    K = num_routes  # K shortest paths for each agent
-    Strategy_vectors = [()]*len(OD_pairs)
-    for i in range(len(OD_pairs)):
-        Strategy_vectors[i] = list()
-        OD_pair = np.array(OD_pairs[i])
-        paths = k_shortest_paths(Networkx, str(OD_pair[0]), str(OD_pair[1]), K, weight = 'weight')
-        TODO
-        for a in range(len(paths)):
-            vec = np.zeros((E,1))
-            for n in range(len(paths[a])-1):
-                idx = get_edge_idx(Edges,  paths[a][n], paths[a][n+1])
-                vec[idx] = 1
-            strategy_vec = np.multiply(vec, Demands[i])
-            if a == 0:
-                Strategy_vectors[i].append(  strategy_vec )
-            if a > 0 and np.dot(strategy_vec.T, Freeflowtimes) < multipl_factor* np.dot(Strategy_vectors[i][0].T, Freeflowtimes ):
-                Strategy_vectors[i].append(strategy_vec )
-
-    return Strategy_vectors, OD_pairs
-                    */
 
 void printNodos(std::vector<Nodo> n) {
     for (auto nodo : n) {
