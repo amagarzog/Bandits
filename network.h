@@ -59,9 +59,9 @@ private:
     std::vector<Carretera> carreteras;
 };
 
-// poner como metodos de la clase network data
+// poner como metodos de la clase network data?
 
-//Create Network
+// Create Network
 NetworkData createNetwork();
 std::vector<Nodo> crearListaNodos(const std::vector<std::vector<std::string>> & datosNodos);
 std::vector<Carretera> crearListaCarreteras(const std::vector<std::vector<std::string>> & datosCarreteras);
@@ -69,13 +69,19 @@ std::vector<Carretera> crearListaCarreteras(const std::vector<std::vector<std::s
 // Compute Strategy Vectors
 std::vector<std::vector<OD_Demand>> createOD_Demands();
 std::vector<std::vector<int>> computeStrategyVectors(const NetworkData & network, std::vector<std::vector<OD_Demand>> & od_Demands, std::vector<std::pair<int, int>> &od_Pairs, int numRoutes, int multFactor);
-int get_edge_idx(std::vector<Carretera>);
 std::vector<std::vector<int>> k_shortest_paths(const NetworkData& network, const int& init_node, const int& term_node, const int& k_paths);
+
+// Compute Travel Times
+std::vector<double> Compute_traveltimes(const NetworkData& networkData, const std::vector<std::vector<int>>& Strategy_vectors, const std::vector<int>& played_actions, int player_id, std::vector<double> Capacities);
+
+// Auxiliares
 int getidx(const NetworkData& network, int nodo1, int nodo2);
 int dot_product(std::vector<int> vec1, std::vector<int> vec2);
-std::vector<int> getCapacities(const NetworkData &n);
-std::vector<int> getFreeFlowTimes(const NetworkData& n);
 
+// Getters
+std::vector<double> getCapacities(const NetworkData &n);
+std::vector<int> getFreeFlowTimes(const NetworkData& n);
+int get_edge_idx(std::vector<Carretera>);
 
 //TODO: Comentar o borrar al terminar la implementación
 void printNodos(std::vector<Nodo> n);

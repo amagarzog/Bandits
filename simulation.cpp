@@ -31,7 +31,7 @@ void Simulation::init(){
 	std::copy(idxs_all.begin(), idxs_all.begin() + this->controlledplayers, this->idcontrolledplayers.begin());
 
 	// Capacidades y contextos aleatorios
-	std::vector<int> initCapacities = getCapacities(network);
+	std::vector<double> initCapacities = getCapacities(network);
 	std::vector<std::vector<double>> Capacities;
 	for (int c = 0; c < this->numcontextos; c++) {
 		std::vector<double> perturbed_capacities;
@@ -63,8 +63,12 @@ void Simulation::init(){
 			int num_actions = Strategy_vectors[p].size();
 			outcome[p] = std::rand() % num_actions;
 		}
-		std::vector<double> capacities = Capacities[std::rand() % this->numcontextos];
-		std::vector<double> traveltimes;// Compute_traveltimes(SiouxNetwork_data, Strategy_vectors, outcome, "all", capacities);
+		std::vector<double> capacities = Capacities[std::rand() % this->numcontextos]; // se pasan las capacidades de un determinado contexto aleatorio
+		std::vector<int> outcomeint(outcome.size());
+		for (int i = 0; i < outcome.size(); i++) {
+			outcomeint[i] = static_cast<int>(outcome[i]);
+		}
+		std::vector<double> traveltimes = Compute_traveltimes(this->network, Strategy_vectors, outcomeint, -1, capacities);
 		for (int n = 0; n < this->numplayers; n++) {
 			max_traveltimes[n] = std::max(max_traveltimes[n], traveltimes[n] + 0.01);
 			min_traveltimes[n] = std::min(min_traveltimes[n], traveltimes[n] - 0.01);

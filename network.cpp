@@ -211,10 +211,10 @@ int dot_product(std::vector<int> vec1, std::vector<int> vec2) {
     return result;
 }
 
-std::vector<int> getCapacities(const NetworkData &n)
+std::vector<double> getCapacities(const NetworkData &n)
 {
     std::vector<Carretera> carreteras = n.getCarreteras();
-    std::vector<int> capacities (carreteras.size());
+    std::vector<double> capacities (carreteras.size());
     for (int j = 0; j < carreteras.size(); j++)
         capacities[j] = carreteras[j].capacity;
 
@@ -272,16 +272,21 @@ void printOD_Demands(std::vector<std::vector<OD_Demand>> d) {
 }
 
 
-/*
-std::vector<double> Compute_traveltimes(const NetworkData& networkData, const std::vector<std::vector<int>>& Strategy_vectors, const std::vector<int>& played_actions, int player_id, const std::vector<double>& Capacities) {
-    int N = Strategy_vectors.size(); // number of players
+
+std::vector<double> Compute_traveltimes(const NetworkData& network, const std::vector<std::vector<int>>& Strategy_vectors, const std::vector<int>& played_actions, int player_id, std::vector<double> Capacities) {
+    int N = Strategy_vectors.size(); // numero de jugadores
     std::vector<double> Total_occupancies(Strategy_vectors[0].size(), 0.0);
     for (int i = 0; i < N; ++i) {
         for (size_t j = 0; j < Strategy_vectors[0].size(); ++j) {
-            Total_occupancies[j] += Strategy_vectors[i][played_actions[i]] * Capacities[j];
+            Total_occupancies[j] += Strategy_vectors[i][played_actions[i]];
         }
     }
-    std::vector<Carretera> carreteras = networkData.getCarreteras();
+
+    if (Capacities.empty()) {
+        Capacities = getCapacities(network);
+    }
+
+    std::vector<Carretera> carreteras = network.getCarreteras();
     int E = carreteras.size();
     std::vector<double> a(E, 0.0);
     for (int i = 0; i < E; ++i) {
@@ -295,12 +300,18 @@ std::vector<double> Compute_traveltimes(const NetworkData& networkData, const st
     for (int i = 0; i < E; ++i) {
         unit_times[i] = a[i] + b[i] * std::pow(Total_occupancies[i], carreteras[i].power);
     }
+
     std::vector<double> Traveltimes(N, 0.0);
-    if (player_id == -1) {
+    if (player_id == -1) { // se hace para todos los jugadores
         for (int i = 0; i < N; ++i) {
-            double X_i = Strategy_vectors[i][played_actions[i]];
+            int a = played_actions[i];
+            std::vector<double> X_i(E);
+            for (int j = 0; j < E; j++) 
+                X_i[j] = Strategy_vectors[played_actions[i]][j];
+                
+          
             for (int j = 0; j < E; ++j) {
-                Traveltimes[i] += X_i * unit_times[j];
+                Traveltimes[i] += X_i[j] * unit_times[j];
             }
         }
     }
@@ -312,4 +323,3 @@ std::vector<double> Compute_traveltimes(const NetworkData& networkData, const st
     }
     return Traveltimes;
 }
-*/
