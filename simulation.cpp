@@ -58,16 +58,18 @@ void Simulation::init(){
 	std::vector<std::vector<double>> Outcomes;
 	std::vector<std::vector<double>> Payoffs;
 	for (int i = 0; i < this->rondas; i++) {
-		std::vector<double> outcome(this->numplayers, 0.0); 
+		std::vector<double> outcome(this->numplayers, 0.0); // todos los jugadores aplican la estrategia 0 por defecto
 		for (int p : this->idcontrolledplayers) {
 			int num_actions = Strategy_vectors[p].size();
-			outcome[p] = std::rand() % num_actions;
+			outcome[p] = std::rand() % num_actions; // el outcome va a ser la accion que juege el jugador: un numero entre 1 y 76 carreteras
 		}
 		std::vector<double> capacities = Capacities[std::rand() % this->numcontextos]; // se pasan las capacidades de un determinado contexto aleatorio
 		std::vector<int> outcomeint(outcome.size());
 		for (int i = 0; i < outcome.size(); i++) {
 			outcomeint[i] = static_cast<int>(outcome[i]);
 		}
+		// OK: entiendo que hasta aqui funciona bien, intenta entender los comentarios estos y lo que hace
+		// A revisar -> traveltimes: importante entender strategy_Vectors y outcomeint
 		std::vector<double> traveltimes = Compute_traveltimes(this->network, Strategy_vectors, outcomeint, -1, capacities);
 		for (int n = 0; n < this->numplayers; n++) {
 			max_traveltimes[n] = std::max(max_traveltimes[n], traveltimes[n] + 0.01);

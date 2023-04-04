@@ -276,10 +276,11 @@ void printOD_Demands(std::vector<std::vector<OD_Demand>> d) {
 std::vector<double> Compute_traveltimes(const NetworkData& network, const std::vector<std::vector<int>>& Strategy_vectors, const std::vector<int>& played_actions, int player_id, std::vector<double> Capacities) {
     int N = Strategy_vectors.size(); // numero de jugadores
     std::vector<double> Total_occupancies(Strategy_vectors[0].size(), 0.0);
-    for (int i = 0; i < N; ++i) {
-        for (size_t j = 0; j < Strategy_vectors[0].size(); ++j) {
-            Total_occupancies[j] += Strategy_vectors[i][played_actions[i]];
-        }
+    for (int i = 0; i < N; ++i) { // Esto es un poco duda pero creo que esta bien
+        std::vector<int> strategy_player = Strategy_vectors[i];
+        int ind = played_actions[i];
+        Total_occupancies[ind] += strategy_player[ind];
+        
     }
 
     if (Capacities.empty()) {
@@ -305,13 +306,14 @@ std::vector<double> Compute_traveltimes(const NetworkData& network, const std::v
     if (player_id == -1) { // se hace para todos los jugadores
         for (int i = 0; i < N; ++i) {
             int a = played_actions[i];
+            int asfd = Strategy_vectors[i][played_actions[i]];
             std::vector<double> X_i(E);
-            for (int j = 0; j < E; j++) 
+            // PROBLEMA AQUI: Comparar con Git + Entender porque funciona así
+            for (int j = 0; j < E; j++)  
                 X_i[j] = Strategy_vectors[played_actions[i]][j];
-                
-          
+            // x_i sera la x de cada jugador, j es la carretera y se iguala a strategyvectors[accionjugadaporjugador(de 204 jugs)][demanda carretera de ese jugador]
             for (int j = 0; j < E; ++j) {
-                Traveltimes[i] += X_i[j] * unit_times[j];
+                Traveltimes[i] += X_i[j] * unit_times[j]; // se multiplica unit times x x: basicamente unit times es un factor para calcular el timepo de viaje
             }
         }
     }
