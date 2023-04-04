@@ -52,6 +52,33 @@ void Simulation::init(){
 
 
 
+	std::vector<double> max_traveltimes(this->numplayers, 0.0);
+	std::vector<double> min_traveltimes(this->numplayers, 1e8);
+	std::vector<std::vector<double>> Capacities_rand;
+	std::vector<std::vector<double>> Outcomes;
+	std::vector<std::vector<double>> Payoffs;
+	for (int i = 0; i < this->rondas; i++) {
+		std::vector<double> outcome(this->numplayers, 0.0); 
+		for (int p : this->idcontrolledplayers) {
+			int num_actions = Strategy_vectors[p].size();
+			outcome[p] = std::rand() % num_actions;
+		}
+		std::vector<double> capacities = Capacities[std::rand() % this->numcontextos];
+		std::vector<double> traveltimes;// Compute_traveltimes(SiouxNetwork_data, Strategy_vectors, outcome, "all", capacities);
+		for (int n = 0; n < this->numplayers; n++) {
+			max_traveltimes[n] = std::max(max_traveltimes[n], traveltimes[n] + 0.01);
+			min_traveltimes[n] = std::min(min_traveltimes[n], traveltimes[n] - 0.01);
+		}
+		Capacities_rand.push_back(capacities);
+		Outcomes.push_back(outcome);
+		std::vector<double> payoffs(this->numplayers);
+		for (int n = 0; n < this->numplayers; n++) {
+			payoffs[n] = -traveltimes[n];
+		}
+		Payoffs.push_back(payoffs);
+	}
+
+
 
 }
 
