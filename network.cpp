@@ -166,6 +166,7 @@ std::vector<std::vector<int>> computeStrategyVectors(const NetworkData& network,
         std::vector<std::vector<int>> k_shortest_paths_between_od_pair = k_shortest_paths(network, od_Pairs[i].first, od_Pairs[i].second, numRoutes);
         paths[i] = k_shortest_paths_between_od_pair;
     }
+    std::vector<int> Freeflowtimes = getFreeFlowTimes(network);
     std::vector<std::vector<int>> Strategy_vectors;
     for (int a = 0; a < paths.size(); ++a) {
         std::vector<int> vec(E, 0);
@@ -179,7 +180,6 @@ std::vector<std::vector<int>> computeStrategyVectors(const NetworkData& network,
         }
         std::vector<int> strategyvec(E, 0);
         std::vector<Carretera> carreteras = network.getCarreteras();
-        std::vector<int> Freeflowtimes(E);
         for (int j = 0; j < E; j++) { //  TODO MEJORAR RENDIMIENTO (unordered map odpairs)
             if (vec[j] == 1) {
                 bool done = false;
@@ -191,7 +191,6 @@ std::vector<std::vector<int>> computeStrategyVectors(const NetworkData& network,
                 }
 
             }
-            Freeflowtimes[j] = carreteras[j].freeFlowTime;
         }
 
         if (a == 0) {
@@ -210,6 +209,26 @@ int dot_product(std::vector<int> vec1, std::vector<int> vec2) {
         result += vec1[i] * vec2[i];
     }
     return result;
+}
+
+std::vector<int> getCapacities(const NetworkData &n)
+{
+    std::vector<Carretera> carreteras = n.getCarreteras();
+    std::vector<int> capacities (carreteras.size());
+    for (int j = 0; j < carreteras.size(); j++)
+        capacities[j] = carreteras[j].capacity;
+
+    return capacities;
+}
+
+std::vector<int> getFreeFlowTimes(const NetworkData& n)
+{
+    std::vector<Carretera> carreteras = n.getCarreteras();
+    std::vector<int> times(carreteras.size());
+    for (int j = 0; j < carreteras.size(); j++)
+        times[j] = carreteras[j].freeFlowTime;
+
+    return times;
 }
 
 std::vector<std::vector<int>> k_shortest_paths(const NetworkData& network, const int& init_node, const int& term_node, const int& k_paths)

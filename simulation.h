@@ -3,6 +3,9 @@
 #include <iostream>
 #include <numeric>
 #include <random> 
+#include <cstdlib>
+#include <ctime>
+#include <cmath>
 #include <algorithm>
 #include "network.h"
 

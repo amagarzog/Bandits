@@ -73,7 +73,8 @@ int get_edge_idx(std::vector<Carretera>);
 std::vector<std::vector<int>> k_shortest_paths(const NetworkData& network, const int& init_node, const int& term_node, const int& k_paths);
 int getidx(const NetworkData& network, int nodo1, int nodo2);
 int dot_product(std::vector<int> vec1, std::vector<int> vec2);
-
+std::vector<int> getCapacities(const NetworkData &n);
+std::vector<int> getFreeFlowTimes(const NetworkData& n);
 
 
 //TODO: Comentar o borrar al terminar la implementación
