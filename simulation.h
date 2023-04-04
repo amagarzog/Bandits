@@ -28,7 +28,7 @@ private:
 	//network
 	NetworkData network;
 	std::vector<std::vector<OD_Demand>> od_Demands;
-	std::vector<std::vector<int>> Strategy_vectors;
+	std::vector<std::vector<std::vector<int>>> Strategy_vectors;
 	std::vector<std::pair<int, int>> od_Pairs;
 
 	//parametros simulacion

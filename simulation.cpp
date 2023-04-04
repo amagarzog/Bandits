@@ -22,13 +22,13 @@ void Simulation::init(){
 	std::vector<int> aux(this->controlledplayers, 0);
 	this->idcontrolledplayers = aux;
 	std::vector<int> idxs_all(this->numplayers);
-	std::iota(idxs_all.begin(), idxs_all.end(), 0); 
+	std::iota(idxs_all.begin(), idxs_all.end(), 0);
 
 	std::random_device rd;
 	std::mt19937 g(rd()); 
 	std::shuffle(idxs_all.begin(), idxs_all.end(), g);
 
-	std::copy(idxs_all.begin(), idxs_all.begin() + this->controlledplayers, this->idcontrolledplayers.begin());
+	std::copy(idxs_all.begin(), idxs_all.begin() + this->controlledplayers, this->idcontrolledplayers.begin()); //elegir los controlledPlayers entre todos los players
 
 	// Capacidades y contextos aleatorios
 	std::vector<double> initCapacities = getCapacities(network);
@@ -44,15 +44,15 @@ void Simulation::init(){
 		// 76 capacidades (1 por carretera) distintas para cada contexto (10)
 	}
 	int runs = 1;
-	std::srand(runs);
+	std::srand(runs); // Intializes random number generator --> rand()
 	std::vector<int> Contexts(this->rondas); // un contexto de los 10 posibles para cada ronda
 	for (int i = 0; i < this->rondas; i++) {
-		Contexts[i] = std::rand() % this->numcontextos;
+		Contexts[i] = std::rand() % this->numcontextos; // el contexto de la ronda i es el resto de dividir un numero aleatorio entre el numero de contextos
 	}
 
 
 
-	std::vector<double> max_traveltimes(this->numplayers, 0.0);
+	std::vector<double> max_traveltimes(this->numplayers, 0.0); 
 	std::vector<double> min_traveltimes(this->numplayers, 1e8);
 	std::vector<std::vector<double>> Capacities_rand;
 	std::vector<std::vector<double>> Outcomes;
@@ -70,7 +70,7 @@ void Simulation::init(){
 		}
 		// OK: entiendo que hasta aqui funciona bien, intenta entender los comentarios estos y lo que hace
 		// A revisar -> traveltimes: importante entender strategy_Vectors y outcomeint
-		std::vector<double> traveltimes = Compute_traveltimes(this->network, Strategy_vectors, outcomeint, -1, capacities);
+		std::vector<double> traveltimes;// = Compute_traveltimes(this->network, Strategy_vectors, outcomeint, -1, capacities);
 		for (int n = 0; n < this->numplayers; n++) {
 			max_traveltimes[n] = std::max(max_traveltimes[n], traveltimes[n] + 0.01);
 			min_traveltimes[n] = std::min(min_traveltimes[n], traveltimes[n] - 0.01);
@@ -83,6 +83,26 @@ void Simulation::init(){
 		}
 		Payoffs.push_back(payoffs);
 	}
+
+	/*
+	 M = 100
+    max_traveltimes = np.zeros(N)
+    min_traveltimes = 1e8 * np.ones(N)
+    Capacities_rand = []
+    Outcomes = []
+    Payoffs = []
+    for i in range(M):
+        outcome = np.zeros(N)  # all play first action by default
+        for p in idxs_controlled:
+            outcome[p] = np.random.randint(len(Strategy_vectors[p]))
+        capacities =  np.array(Capacities[np.random.randint(0, C)])
+        traveltimes = Compute_traveltimes(SiouxNetwork_data, Strategy_vectors, outcome.astype(int), 'all', capacities)
+        max_traveltimes = np.maximum(max_traveltimes, traveltimes + 0.01)
+        min_traveltimes = np.minimum(min_traveltimes, traveltimes - 0.01)
+        Capacities_rand.append(capacities)
+        Outcomes.append(outcome)
+        Payoffs.append(-traveltimes)
+	*/
 
 
 

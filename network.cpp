@@ -148,7 +148,7 @@ int getidx(const NetworkData& network, int nodo1, int nodo2) {
 }
 
 
-std::vector<std::vector<int>> computeStrategyVectors(const NetworkData& network, std::vector<std::vector<OD_Demand>>& od_Demands, std::vector<std::pair<int, int>>& od_Pairs, int numRoutes, int multFactor) {
+std::vector<std::vector<std::vector<int>>> computeStrategyVectors(const NetworkData& network, std::vector<std::vector<OD_Demand>>& od_Demands, std::vector<std::pair<int, int>>& od_Pairs, int numRoutes, int multFactor) {
     std::vector<int> demands;
 
     for (int i = 0; i < NUM_NODOS; i++) {
@@ -159,49 +159,89 @@ std::vector<std::vector<int>> computeStrategyVectors(const NetworkData& network,
             }
         }
     }
-    
-    int E = network.getNumCarreteras(); //esto hace que no pueda poner const en el param network
-    std::vector<std::vector<std::vector<int>>> paths(od_Pairs.size()); 
-    for (int i = 0; i < od_Pairs.size(); i++) {
-        std::vector<std::vector<int>> k_shortest_paths_between_od_pair = k_shortest_paths(network, od_Pairs[i].first, od_Pairs[i].second, numRoutes);
-        paths[i] = k_shortest_paths_between_od_pair;
-    }
+
     std::vector<int> Freeflowtimes = getFreeFlowTimes(network);
-    std::vector<std::vector<int>> Strategy_vectors;
-    for (int a = 0; a < paths.size(); ++a) {
-        std::vector<int> vec(E, 0);
-        std::vector<std::vector<int>> pathtmp = paths[a];
-        for (int n = 0; n < pathtmp.size(); ++n) { // 5 caminos
-            std::vector<int> kpath = pathtmp[n];
-            for (int d = 0; d < kpath.size()-1; d++) { // nodos de cada camino (de los 5)
-                int idx = getidx(network, kpath[d], kpath[d+1]);
+
+    int E = network.getNumCarreteras(); //esto hace que no pueda poner const en el param network
+
+    std::vector<std::vector<std::vector<int>>> Strategy_vectors; // tamaño 528 = 24*24
+
+    //Para cada odPair se tiene k = 5 caminos posibles. Cada camino es un vector de carreteras.
+    std::vector<std::vector<std::vector<int>>> paths(od_Pairs.size()); // tamaño = nº de odPAirs
+
+
+    for (int i = 0; i < od_Pairs.size(); i++) {
+        std::vector<std::vector<int>> Strategy_vector;
+        std::vector<std::vector<int>> k_shortest_paths_between_od_pair = k_shortest_paths(network, od_Pairs[i].first, od_Pairs[i].second, numRoutes);
+        paths[i] = k_shortest_paths_between_od_pair; // Para cada odPair se tiene k = 5 caminos posibles
+
+        for (int camino = 0; camino < paths[i].size(); camino++) {
+            std::vector<int> vec(E, 0);
+            for (int nodo = 0; nodo < paths[i][camino].size() - 1; nodo++) { // nodos de cada camino (de los 5)
+                int idx = getidx(network, paths[i][camino][nodo], paths[i][camino][nodo + 1]);
                 vec[idx] = 1; // se marca la carretera entre los dos nodos
             }
-        }
-        std::vector<int> strategyvec(E, 0);
-        std::vector<Carretera> carreteras = network.getCarreteras();
-        for (int j = 0; j < E; j++) { //  TODO MEJORAR RENDIMIENTO (unordered map odpairs)
-            if (vec[j] == 1) {
-                bool done = false;
-                for (int i = 0; i < od_Pairs.size() && !done; i++) {
-                    if (od_Pairs[i].first == carreteras[j].init_node && od_Pairs[i].second == carreteras[j].term_node) {
-                        done = true;
-                        strategyvec[j] = demands[i];
+            std::vector<int> strategyvec(E, 0); //Para cada carretera (76) almaceno la demanda de cada jugador en esa carretera
+            std::vector<Carretera> carreteras = network.getCarreteras();
+            for (int j = 0; j < E; j++) { //  TODO MEJORAR RENDIMIENTO (unordered map odpairs)
+                if (vec[j] == 1) {
+                    bool done = false;
+                    for (int i = 0; i < od_Pairs.size() && !done; i++) {
+                        if (od_Pairs[i].first == carreteras[j].init_node && od_Pairs[i].second == carreteras[j].term_node) { // ver que carretera j coincide con el odPAir[i] para asignar a dicha carretera j la demanda i  (el proceso de obtencionn de odPair y demandas de cada carretera tiene un orden distinto al proceso de la obtenciion de la lista de carreteras)
+                            done = true;
+                            strategyvec[j] = demands[i];
+                        }
                     }
                 }
-
             }
+            Strategy_vector.push_back(strategyvec);
+            /*if (camino == 0) {
+                Strategy_vector.push_back(strategyvec);
+            }
+            else if (true || dot_product(strategyvec, Freeflowtimes) < multFactor * dot_product(Strategy_vector[0], Freeflowtimes)) { // para quedarse solo con las mejores estrategias para cada odPAir y evitar congestionar el strategy vectors
+                Strategy_vector.push_back(strategyvec);
+            }*/
         }
-
-        if (a == 0) {
-            Strategy_vectors.push_back(strategyvec);
-        }
-        else if (dot_product(strategyvec, Freeflowtimes) < multFactor*dot_product(Strategy_vectors[0], Freeflowtimes)) {
-            Strategy_vectors.push_back(strategyvec);
-        }
+        Strategy_vectors.push_back(Strategy_vector);
     }
     return Strategy_vectors;
 }
+    
+
+    /*
+    if 
+    mult_factor is None:
+        multipl_factor = 3
+    else:
+        multipl_factor = mult_factor
+    OD_pairs = []
+    Demands = []
+    for i in range(24):
+        for j in range(24):
+            if OD_demands[i, j] > 0:
+                OD_pairs.append([i + 1, j + 1])
+                Demands.append(OD_demands[i, j] / 100)
+
+    E = len(Edges)
+    K = num_routes  # K shortest paths for each agent
+    Strategy_vectors = [()]*len(OD_pairs)
+    for i in range(len(OD_pairs)): // 24*24 origen-destino trayectos
+        Strategy_vectors[i] = list()
+        OD_pair = np.array(OD_pairs[i])
+        paths = k_shortest_paths(Networkx, str(OD_pair[0]), str(OD_pair[1]), K, weight = 'weight') // para cada odPAir se encuentran los k=5 caminos mas cortos
+        for a in range(len(paths)):
+            vec = np.zeros((E,1)) // un vector --> para cada carretera el valor 0
+            for n in range(len(paths[a])-1):
+                idx = get_edge_idx(Edges,  paths[a][n], paths[a][n+1])
+                vec[idx] = 1 //identifica las carreteras usadas en el camino a (cada uno de los k caminos mas cortos)
+            
+            strategy_vec = np.multiply(vec, Demands[i]) //tamaño E = numCarreteras. Se calcula un strategy vector para cada uno de los 5 caminos mas cortos dado un odPAir
+            if a == 0:
+                Strategy_vectors[i].append(  strategy_vec )
+            if a > 0 and np.dot(strategy_vec.T, Freeflowtimes) < multipl_factor* np.dot(Strategy_vectors[i][0].T, Freeflowtimes ):
+                Strategy_vectors[i].append(strategy_vec )
+                
+       */
 
 int dot_product(std::vector<int> vec1, std::vector<int> vec2) {
     int result = 0.0;
@@ -273,8 +313,8 @@ void printOD_Demands(std::vector<std::vector<OD_Demand>> d) {
 
 
 
-std::vector<double> Compute_traveltimes(const NetworkData& network, const std::vector<std::vector<int>>& Strategy_vectors, const std::vector<int>& played_actions, int player_id, std::vector<double> Capacities) {
-    int N = Strategy_vectors.size(); // numero de jugadores
+/*std::vector<double>*/ void Compute_traveltimes(const NetworkData & network, const std::vector< std::vector<std::vector<int>>>&Strategy_vectors, const std::vector<int>&played_actions, int player_id, std::vector<double> Capacities) {
+    /*int N = Strategy_vectors.size(); // numero de jugadores
     std::vector<double> Total_occupancies(Strategy_vectors[0].size(), 0.0);
     for (int i = 0; i < N; ++i) { // Esto es un poco duda pero creo que esta bien
         std::vector<int> strategy_player = Strategy_vectors[i];
@@ -288,8 +328,10 @@ std::vector<double> Compute_traveltimes(const NetworkData& network, const std::v
     }
 
     std::vector<Carretera> carreteras = network.getCarreteras();
+
     int E = carreteras.size();
     std::vector<double> a(E, 0.0);
+
     for (int i = 0; i < E; ++i) {
         a[i] = carreteras[i].freeFlowTime;
     }
@@ -323,5 +365,5 @@ std::vector<double> Compute_traveltimes(const NetworkData& network, const std::v
             Traveltimes[0] += X_i * unit_times[j];
         }
     }
-    return Traveltimes;
+    return Traveltimes;*/
 }
