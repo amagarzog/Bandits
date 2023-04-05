@@ -1,4 +1,5 @@
 #include "auxiliar.h"
+
 /*
 
 void Initialize_Players(int N, std::vector<std::string> OD_pairs, std::vector<std::vector<std::vector<double>>> Strategy_vectors, std::vector<double> min_traveltimes, std::vector<double> max_traveltimes, std::vector<int> idxs_controlled, double T, std::string Algo, int version, std::vector<double> Sigma, std::vector<std::vector<double>> Kernels, std::vector<double> sigmas, int numberofcontexts, std::vector<std::vector<int>> Capacities, std::vector<Player*>& Players) {
@@ -107,11 +108,60 @@ GameData Simulate_Game(int run, std::vector<Player*>& Players, int T, SiouxNetwo
     }
     return Game_data;
 }
+*/
+
+std::vector<Eigen::MatrixXd> Optimize_Kernels(bool reoptimize, std::string Algo,  const std::vector<int>& idxs_controlled, const std::vector<std::vector<std::vector<int>>>& Strategy_vectors, const std::vector<double>& sigmas, int poly_degree, const std::vector<std::vector<double>>& Outcomes, const std::vector<std::vector<double>>& Capacities, const std::vector<std::vector<double>>& Payoffs, std::vector<int>& listParmArrays)
+{
+    std::vector<Eigen::MatrixXd> Kernels(Strategy_vectors.size());
+
+    /*
+    cargar parametros: Algoritmo, version del algoritmo
+    ok: reoptimize, numero de jugadores controlados
+    */
+
+    // Kernel tiene N jugadores pero solo se usan los indices de los jugadores controlados, el resto de los 500 jugadores estan vacios
+    // Por lo tanto, para acceder a cada kernel hay que usar el indice de los jugadores controlados como la posición del kernel
+    for (int jugador = 0; jugador < idxs_controlled.size(); jugador++) { // para cada jugador de los 20
+        int ind = idxs_controlled[jugador];
+        if (Kernels[ind].isZero()) { 
+
+            // idx_nonzeros = np.where(np.sum(Strategy_vectors[p], axis = 0) != 0)[0]
+            std::vector<int> idx_nonzeros; // se usa en reoptimizacion -> entiendo que guarda las estrategias o brazos (de los 5 que hay) si no tienen valores de 0
+            for (int i = 0; i < Strategy_vectors[ind].size(); ++i) { // para cada strategia de vectors, hay 5 (de 5 brazos)
+                if (std::accumulate(Strategy_vectors[ind][i].begin(), Strategy_vectors[ind][i].end(), 0) != 0) { // calcula la suma de elementos con accumulate desde el begin hasta end
+                    idx_nonzeros.push_back(i);
+                }
+            }
+            const int dim = idx_nonzeros.size();
+
+            if (reoptimize == false) { // se hace en el init
+
+
+            }
+            else { // se hace en la ejecución del juego
+
+            }
 
 
 
 
 
+        }
+
+
+
+
+
+
+
+
+
+
+    }
+
+
+    return Kernels;
+}
 
 
 
@@ -208,5 +258,4 @@ std::tuple<std::vector<GPy::Kern*>, std::vector<MatrixXd>> Optimize_Kernels(bool
     }
 
     return Kernels, list_of_param_arrays;
-}
-*/
+}*/

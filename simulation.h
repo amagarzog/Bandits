@@ -8,6 +8,7 @@
 #include <cmath>
 #include <algorithm>
 #include "network.h"
+#include "auxiliar.h"
 
 const int num_routes = 5;
 const int multFactor = 1;
@@ -21,18 +22,22 @@ public:
 	void run();
 
 private:
-	//players
+	// players
 	int numplayers, controlledplayers;
 	std::vector<int> idcontrolledplayers;
 
-	//network
+	// network
 	NetworkData network;
 	std::vector<std::vector<OD_Demand>> od_Demands;
 	std::vector<std::vector<std::vector<int>>> Strategy_vectors;
 	std::vector<std::pair<int, int>> od_Pairs;
 
-	//parametros simulacion
-	int rondas, polykernel, numcontextos;
+	// parametros simulacion
+	int rondas, numcontextos;
+
+	// kernel
+	int polykernel;
+	bool reoptimize;
 
 
 	void selectParameters();

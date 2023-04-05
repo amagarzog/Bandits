@@ -15,6 +15,7 @@ void Simulation::selectParameters(){
 	this->rondas = 100;
 	this->numcontextos = 10;
 	this->polykernel = 4;
+	this->reoptimize = false;
 }
 
 void Simulation::init(){
@@ -91,6 +92,8 @@ void Simulation::init(){
 	*/
 
 
+
+
 	// Kernel
 
 	std::vector<double> sigmas(max_traveltimes.size());
@@ -98,6 +101,15 @@ void Simulation::init(){
 	for (int i = 0; i < max_traveltimes.size(); ++i) {
 		sigmas[i] = 0.001 * (max_traveltimes[i] - min_traveltimes[i]);
 	}
+	std::string Algo = "cGPMW";
+
+
+
+std::vector<int> listParmArrays; // no se que tipo dato es
+	std::vector<Eigen::MatrixXd> Kernels (this->numplayers); 
+	Kernels = Optimize_Kernels(this->reoptimize, Algo, this->idcontrolledplayers, this->Strategy_vectors, sigmas, this->polykernel, Outcomes, Capacities, Payoffs, listParmArrays);
+
+
 
 
 
