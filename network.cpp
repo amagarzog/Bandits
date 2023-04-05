@@ -195,56 +195,22 @@ std::vector<std::vector<std::vector<int>>> computeStrategyVectors(const NetworkD
                 }
             }
             Strategy_vector.push_back(strategyvec);
-            /*if (camino == 0) {
-                Strategy_vector.push_back(strategyvec);
-            }
-            else if (true || dot_product(strategyvec, Freeflowtimes) < multFactor * dot_product(Strategy_vector[0], Freeflowtimes)) { // para quedarse solo con las mejores estrategias para cada odPAir y evitar congestionar el strategy vectors
-                Strategy_vector.push_back(strategyvec);
-            }*/
         }
         Strategy_vectors.push_back(Strategy_vector);
     }
     return Strategy_vectors;
 }
-    
-
-    /*
-    if 
-    mult_factor is None:
-        multipl_factor = 3
-    else:
-        multipl_factor = mult_factor
-    OD_pairs = []
-    Demands = []
-    for i in range(24):
-        for j in range(24):
-            if OD_demands[i, j] > 0:
-                OD_pairs.append([i + 1, j + 1])
-                Demands.append(OD_demands[i, j] / 100)
-
-    E = len(Edges)
-    K = num_routes  # K shortest paths for each agent
-    Strategy_vectors = [()]*len(OD_pairs)
-    for i in range(len(OD_pairs)): // 24*24 origen-destino trayectos
-        Strategy_vectors[i] = list()
-        OD_pair = np.array(OD_pairs[i])
-        paths = k_shortest_paths(Networkx, str(OD_pair[0]), str(OD_pair[1]), K, weight = 'weight') // para cada odPAir se encuentran los k=5 caminos mas cortos
-        for a in range(len(paths)):
-            vec = np.zeros((E,1)) // un vector --> para cada carretera el valor 0
-            for n in range(len(paths[a])-1):
-                idx = get_edge_idx(Edges,  paths[a][n], paths[a][n+1])
-                vec[idx] = 1 //identifica las carreteras usadas en el camino a (cada uno de los k caminos mas cortos)
-            
-            strategy_vec = np.multiply(vec, Demands[i]) //tamaño E = numCarreteras. Se calcula un strategy vector para cada uno de los 5 caminos mas cortos dado un odPAir
-            if a == 0:
-                Strategy_vectors[i].append(  strategy_vec )
-            if a > 0 and np.dot(strategy_vec.T, Freeflowtimes) < multipl_factor* np.dot(Strategy_vectors[i][0].T, Freeflowtimes ):
-                Strategy_vectors[i].append(strategy_vec )
-                
-       */
 
 int dot_product(std::vector<int> vec1, std::vector<int> vec2) {
     int result = 0.0;
+    for (int i = 0; i < vec1.size(); i++) {
+        result += vec1[i] * vec2[i];
+    }
+    return result;
+}
+
+double dot_product2(std::vector<int> vec1, std::vector<double> vec2) {
+    double result = 0.0;
     for (int i = 0; i < vec1.size(); i++) {
         result += vec1[i] * vec2[i];
     }
@@ -313,14 +279,17 @@ void printOD_Demands(std::vector<std::vector<OD_Demand>> d) {
 
 
 
-/*std::vector<double>*/ void Compute_traveltimes(const NetworkData & network, const std::vector< std::vector<std::vector<int>>>&Strategy_vectors, const std::vector<int>&played_actions, int player_id, std::vector<double> Capacities) {
-    /*int N = Strategy_vectors.size(); // numero de jugadores
-    std::vector<double> Total_occupancies(Strategy_vectors[0].size(), 0.0);
-    for (int i = 0; i < N; ++i) { // Esto es un poco duda pero creo que esta bien
-        std::vector<int> strategy_player = Strategy_vectors[i];
-        int ind = played_actions[i];
-        Total_occupancies[ind] += strategy_player[ind];
-        
+std::vector<double> Compute_traveltimes(const NetworkData & network, const std::vector< std::vector<std::vector<int>>>&Strategy_vectors, const std::vector<int>&played_actions, int player_id, std::vector<double> Capacities) {
+    int N = Strategy_vectors.size(); // numero de jugadores
+    vector<double> Total_occupancies(played_actions.size(), 0.0);
+    Total_occupancies.resize(Strategy_vectors[0][0].size(), 0); // Inicializar con ceros
+
+    for (int i = 0; i < N; i++) {
+        int action = played_actions[i];
+        for (size_t j = 0; j < Strategy_vectors[i][action].size(); j++) {
+            Total_occupancies[j] += Strategy_vectors[i][action][j]; // suma de las carreteras ocupadas (de todos los jugadores)
+            // de la estrategia elegida por el jugador (action)
+        }
     }
 
     if (Capacities.empty()) {
@@ -343,27 +312,19 @@ void printOD_Demands(std::vector<std::vector<OD_Demand>> d) {
     for (int i = 0; i < E; ++i) {
         unit_times[i] = a[i] + b[i] * std::pow(Total_occupancies[i], carreteras[i].power);
     }
+    
 
     std::vector<double> Traveltimes(N, 0.0);
     if (player_id == -1) { // se hace para todos los jugadores
         for (int i = 0; i < N; ++i) {
-            int a = played_actions[i];
-            int asfd = Strategy_vectors[i][played_actions[i]];
-            std::vector<double> X_i(E);
-            // PROBLEMA AQUI: Comparar con Git + Entender porque funciona así
-            for (int j = 0; j < E; j++)  
-                X_i[j] = Strategy_vectors[played_actions[i]][j];
-            // x_i sera la x de cada jugador, j es la carretera y se iguala a strategyvectors[accionjugadaporjugador(de 204 jugs)][demanda carretera de ese jugador]
-            for (int j = 0; j < E; ++j) {
-                Traveltimes[i] += X_i[j] * unit_times[j]; // se multiplica unit times x x: basicamente unit times es un factor para calcular el timepo de viaje
-            }
+            const std::vector<int>& X_i = Strategy_vectors[i][played_actions[i]];
+            Traveltimes[i] = dot_product2(X_i, unit_times);
         }
     }
-    else {
-        double X_i = Strategy_vectors[player_id][played_actions[player_id]];
-        for (int j = 0; j < E; ++j) {
-            Traveltimes[0] += X_i * unit_times[j];
-        }
+    else { // por si se hace a un jugador en particular solo
+        const std::vector<int>& X_i = Strategy_vectors[player_id][played_actions[player_id]];
+        Traveltimes[player_id] = dot_product2(X_i, unit_times);
     }
-    return Traveltimes;*/
+    
+    return Traveltimes;
 }

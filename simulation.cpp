@@ -68,9 +68,8 @@ void Simulation::init(){
 		for (int i = 0; i < outcome.size(); i++) {
 			outcomeint[i] = static_cast<int>(outcome[i]);
 		}
-		// OK: entiendo que hasta aqui funciona bien, intenta entender los comentarios estos y lo que hace
-		// A revisar -> traveltimes: importante entender strategy_Vectors y outcomeint
-		std::vector<double> traveltimes;// = Compute_traveltimes(this->network, Strategy_vectors, outcomeint, -1, capacities);
+	
+		std::vector<double> traveltimes = Compute_traveltimes(this->network, Strategy_vectors, outcomeint, -1, capacities);
 		for (int n = 0; n < this->numplayers; n++) {
 			max_traveltimes[n] = std::max(max_traveltimes[n], traveltimes[n] + 0.01);
 			min_traveltimes[n] = std::min(min_traveltimes[n], traveltimes[n] - 0.01);
