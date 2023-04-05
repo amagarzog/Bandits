@@ -51,13 +51,13 @@ void Simulation::init(){
 	}
 
 
-
+	// Escalar recompensas entre 0 1, para ello se calculan maxtraveltimes y mintraveltimes
 	std::vector<double> max_traveltimes(this->numplayers, 0.0); 
 	std::vector<double> min_traveltimes(this->numplayers, 1e8);
 	std::vector<std::vector<double>> Capacities_rand;
 	std::vector<std::vector<double>> Outcomes;
 	std::vector<std::vector<double>> Payoffs;
-	for (int i = 0; i < this->rondas; i++) {
+	for (int i = 0; i < this->rondas; i++) { // en el github lo hace sobre 100 veces
 		std::vector<double> outcome(this->numplayers, 0.0); // todos los jugadores aplican la estrategia 0 por defecto
 		for (int p : this->idcontrolledplayers) {
 			int num_actions = Strategy_vectors[p].size();
@@ -82,26 +82,22 @@ void Simulation::init(){
 		}
 		Payoffs.push_back(payoffs);
 	}
+	
 
 	/*
-	 M = 100
-    max_traveltimes = np.zeros(N)
-    min_traveltimes = 1e8 * np.ones(N)
-    Capacities_rand = []
-    Outcomes = []
-    Payoffs = []
-    for i in range(M):
-        outcome = np.zeros(N)  # all play first action by default
-        for p in idxs_controlled:
-            outcome[p] = np.random.randint(len(Strategy_vectors[p]))
-        capacities =  np.array(Capacities[np.random.randint(0, C)])
-        traveltimes = Compute_traveltimes(SiouxNetwork_data, Strategy_vectors, outcome.astype(int), 'all', capacities)
-        max_traveltimes = np.maximum(max_traveltimes, traveltimes + 0.01)
-        min_traveltimes = np.minimum(min_traveltimes, traveltimes - 0.01)
-        Capacities_rand.append(capacities)
-        Outcomes.append(outcome)
-        Payoffs.append(-traveltimes)
+	Entendemos que los maxtraveltimes y los mintravel times se van a usar en cada algoritmo para escalar los premios entre 0 y 1. Payoff es la recompensa, y, 
+	usando la recompensa se escalaran los premios así: pero esto se entiende que se hará dentro del propio algoritmo
+	scaled_payoffs = (max_traveltimes - Payoffs) / (max_traveltimes - min_traveltimes)
 	*/
+
+
+	// Kernel
+
+	std::vector<double> sigmas(max_traveltimes.size());
+
+	for (int i = 0; i < max_traveltimes.size(); ++i) {
+		sigmas[i] = 0.001 * (max_traveltimes[i] - min_traveltimes[i]);
+	}
 
 
 

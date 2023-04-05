@@ -6,6 +6,7 @@
 #include <sstream>
 #include <algorithm>
 #include <iterator>
+#include <Eigen/Dense>
 
 //includes para el algoritmo k_shortest_paths
 #include <limits>
