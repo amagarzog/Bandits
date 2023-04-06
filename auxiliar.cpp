@@ -1,6 +1,6 @@
 #include "auxiliar.h"
 
-/*
+
 
 void Initialize_Players(int N, std::vector<std::string> OD_pairs, std::vector<std::vector<std::vector<double>>> Strategy_vectors, std::vector<double> min_traveltimes, std::vector<double> max_traveltimes, std::vector<int> idxs_controlled, double T, std::string Algo, int version, std::vector<double> Sigma, std::vector<std::vector<double>> Kernels, std::vector<double> sigmas, int numberofcontexts, std::vector<std::vector<int>> Capacities, std::vector<Player*>& Players) {
     for (int i = 0; i < N; i++) {
@@ -30,6 +30,7 @@ void Initialize_Players(int N, std::vector<std::string> OD_pairs, std::vector<st
 
 }
 
+/*
 GameData Simulate_Game(int run, std::vector<Player*>& Players, int T, SiouxNetwork_data_original& SiouxNetwork_data_original, Strategy_vectors& Strategy_vectors, std::vector<double>& sigmas, std::vector<std::vector<int>>& Capacities, std::vector<std::vector<double>>& Total_occupancies, std::vector<std::vector<double>>& addit_Congestions, std::vector<int>* Contexts)
 {
    int N = Players.size();
@@ -124,12 +125,13 @@ std::vector<Eigen::MatrixXd> Optimize_Kernels(bool reoptimize, std::string Algo,
         int ind = idxs_controlled[jugador];
         if (Kernels[ind].isZero()) { 
 
-            // idx_nonzeros = np.where(np.sum(Strategy_vectors[p], axis = 0) != 0)[0]
             std::vector<int> idx_nonzeros; // se usa en reoptimizacion -> entiendo que guarda las estrategias o brazos (de los 5 que hay) si no tienen valores de 0
-            for (int i = 0; i < Strategy_vectors[ind].size(); ++i) { // para cada strategia de vectors, hay 5 (de 5 brazos)
-                if (std::accumulate(Strategy_vectors[ind][i].begin(), Strategy_vectors[ind][i].end(), 0) != 0) { // calcula la suma de elementos con accumulate desde el begin hasta end
-                    idx_nonzeros.push_back(i);
+            for (int carr = 0; carr < Strategy_vectors[ind][0].size(); carr++) { // para cada carretera se suman los valores de los caminos para ver si el jugador pasa por la carretera en algun camino
+                int suma = 0;
+                for (int camino = 0; camino < Strategy_vectors[ind].size(); ++camino) { 
+                    suma += Strategy_vectors[ind][camino][carr];
                 }
+                if (suma != 0) idx_nonzeros.push_back(suma);
             }
             const int dim = idx_nonzeros.size();
 
