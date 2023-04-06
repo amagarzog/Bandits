@@ -110,14 +110,13 @@ GameData Simulate_Game(int run, std::vector<Player*>& Players, int T, SiouxNetwo
 }
 */
 
-std::vector<Eigen::MatrixXd> Optimize_Kernels(bool reoptimize, std::string Algo,  const std::vector<int>& idxs_controlled, const std::vector<std::vector<std::vector<int>>>& Strategy_vectors, const std::vector<double>& sigmas, int poly_degree, const std::vector<std::vector<double>>& Outcomes, const std::vector<std::vector<double>>& Capacities, const std::vector<std::vector<double>>& Payoffs, std::vector<int>& listParmArrays)
+std::vector<Eigen::MatrixXd> Optimize_Kernels(bool reoptimize, std::string Algo,  const std::vector<int>& idxs_controlled, const std::vector<std::vector<std::vector<int>>>& Strategy_vectors, const std::vector<double>& sigmas, int poly_degree, const std::vector<std::vector<double>>& Outcomes, const std::vector<std::vector<double>>& Capacities, const std::vector<std::vector<double>>& Payoffs, std::vector<std::vector<double>>& list_of_param_arrays)
 {
     std::vector<Eigen::MatrixXd> Kernels(Strategy_vectors.size());
 
-    /*
-    cargar parametros: Algoritmo, version del algoritmo
-    ok: reoptimize, numero de jugadores controlados
-    */
+    // Cargar parametros para el algoritmo Algo
+    std::string filename = "list_of_param_arrays_" + Algo + ".txt";
+    list_of_param_arrays = loadParamsFromFile(filename);
 
     // Kernel tiene N jugadores pero solo se usan los indices de los jugadores controlados, el resto de los 500 jugadores estan vacios
     // Por lo tanto, para acceder a cada kernel hay que usar el indice de los jugadores controlados como la posición del kernel
@@ -135,6 +134,23 @@ std::vector<Eigen::MatrixXd> Optimize_Kernels(bool reoptimize, std::string Algo,
             const int dim = idx_nonzeros.size();
 
             if (reoptimize == false) { // se hace en el init
+                std::vector<double> loaded_params = list_of_param_arrays[ind]; // cargando parametros desde lista para Algo
+                Eigen::VectorXd variances(2);
+                variances << loaded_params[0], loaded_params[3];
+                Eigen::VectorXd scales(2);
+                scales << loaded_params[1], loaded_params[4];
+                Eigen::VectorXd biases(2);
+                biases << loaded_params[2], loaded_params[5];
+                Eigen::MatrixXd active_dims(2, dim);
+                for (int i = 0; i < dim; i++) {
+                    active_dims(0, i) = i;
+                    active_dims(1, i) = i + dim;
+                }
+
+                //Eigen::MatrixXd kernel_1 = GPy::kern::Poly(dim, 1.0, variances(0), scales(0), biases(0), active_dims.row(0));
+                //Eigen::MatrixXd kernel_2 = GPy::kern::Poly(dim, poly_degree, variances(1), scales(1), biases(1), active_dims.row(1));
+                //Kernels[ind] = kernel_1.cwiseProduct(kernel_2);
+
 
 
             }
@@ -163,6 +179,31 @@ std::vector<Eigen::MatrixXd> Optimize_Kernels(bool reoptimize, std::string Algo,
     return Kernels;
 }
 
+
+std::vector<std::vector<double>> loadParamsFromFile(std::string fileName)
+{
+    std::ifstream file(fileName);
+    std::vector<std::vector<double>> params;
+
+    if (file.is_open()) {
+        std::string line;
+        while (getline(file, line)) {
+            std::istringstream iss(line);
+            std::vector<double> paramLine;
+            double val;
+            while (iss >> val) {
+                paramLine.push_back(val);
+            }
+            params.push_back(paramLine);
+        }
+        file.close();
+    }
+    else {
+        std::cerr << "No se pudo abrir el archivo: " << fileName << std::endl;
+    }
+
+    return params;
+}
 
 
 /*

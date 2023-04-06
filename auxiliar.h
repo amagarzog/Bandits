@@ -8,6 +8,8 @@
 #include <string>
 #include <cmath>
 #include <random>
+#include <fstream>
+#include <vector>
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 #include "algorithms.h"
@@ -31,7 +33,9 @@ void Initialize_Players(int N, std::vector<std::string> OD_pairs, std::vector<st
 
 void Initilize_Players_ini();
 GameData Simulate_Game(int run, std::vector<Player> Players, int T, SiouxNetwork_data_original& SiouxNetwork_data_original, Strategy_vectors& Strategy_vectors, std::vector<double>& sigmas, std::vector<std::vector<int>>& Capacities, std::vector<std::vector<double>>& Total_occupancies, std::vector<std::vector<double>>& addit_Congestions, std::vector<int>* Contexts = nullptr);
-std::vector<Eigen::MatrixXd> Optimize_Kernels(bool reoptimize, std::string Algo, const std::vector<int> &idxs_controlled, const std::vector<std::vector<std::vector<int>>>& Strategy_vectors, const std::vector<double> &sigmas, int poly_degree, const std::vector<std::vector<double>> &Outcomes, const std::vector<std::vector<double>> & Capacities, const std::vector<std::vector<double>> &Payoffs, std::vector<int> &listParmArrays);
+std::vector<Eigen::MatrixXd> Optimize_Kernels(bool reoptimize, std::string Algo, const std::vector<int> &idxs_controlled, const std::vector<std::vector<std::vector<int>>>& Strategy_vectors, const std::vector<double> &sigmas, int poly_degree, const std::vector<std::vector<double>> &Outcomes, const std::vector<std::vector<double>> & Capacities, const std::vector<std::vector<double>> &Payoffs, std::vector<std::vector<double>>& list_of_param_arrays);
 
+// Cargar parametros
+std::vector<std::vector<double>> loadParamsFromFile(std::string fileName);
 
 #endif
