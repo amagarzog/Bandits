@@ -7,6 +7,7 @@
 #include <ctime>
 #include <cmath>
 #include <algorithm>
+//#include <GPy/GPy.h>
 #include "network.h"
 #include "auxiliar.h"
 
