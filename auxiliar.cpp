@@ -149,10 +149,39 @@ std::vector<Eigen::MatrixXd> Optimize_Kernels(bool reoptimize, std::string Algo,
                     active_dims(1, i) = i + dim;
                 }
 
-                Eigen::MatrixXd kernel_1 (dim, dim);
-                kernel_1.setZero();
-                kernel_1 = kernel_1.cast<double>();
-                kernel_1 = poly_kernel(dim, 1, variances(0), scales(0), biases(0), active_dims.row(0));
+
+
+                Eigen::MatrixXd kernel_1(dim, dim);
+                Eigen::VectorXi active_dimsuno = active_dims.row(0).cast<int>().transpose();
+                kernel_1 = poly_kernel(dim, 1, variances(0), scales(0), biases(0), active_dimsuno);
+
+                Eigen::MatrixXd kernel_2(dim, dim);
+                Eigen::VectorXi active_dimsdos = active_dims.row(1).cast<int>().transpose();
+                kernel_2 = poly_kernel(dim, poly_degree, variances(1), scales(1), biases(1), active_dimsdos);
+                Kernels[ind] = kernel_1.cwiseProduct(kernel_2);
+
+
+                /*int num_active_dims = active_dimsuno.size();
+                active_dimsuno.cast<double>();
+                kernel.setZero();
+
+               //Convierte a tipo numérico común
+               double pow_scale_var = scales(0) * variances(0);
+               double pow_bias = biases(0) * biases(0);
+
+
+               // Convierte la matriz a tipo numérico común
+               //kernel = kernel.cast<double>();
+
+               for (int i = 0; i < num_active_dims; ++i) {
+                   int d = active_dimsuno(i);
+                   for (int j = 0; j <= 1; ++j) {
+                       for (int k = 0; k <= 1; ++k) {
+                           // Realiza las operaciones con los mismos tipos
+                           kernel(d, d) += pow_scale_var;// std::pow(pow_scale_var, j + k)* std::pow(pow_bias, j)* std::pow(pow_bias, k);
+                       }
+                   }
+               }*/
                 //Eigen::MatrixXd kernel_2 = poly_kernel(dim, poly_degree, variances(1), scales(1), biases(1), active_dims.row(1));
                 //Kernels[ind] = kernel_1.cwiseProduct(kernel_2);
 
@@ -219,23 +248,20 @@ std::vector<std::vector<double>> loadParamsFromFile(std::string fileName)
 
 Eigen::MatrixXd poly_kernel(int dim, int degree, double variance, double scale, double bias, const Eigen::VectorXi& active_dims) {
     int num_active_dims = active_dims.size();
-    Eigen::MatrixXd kernel(dim, dim);
-    kernel.setZero();
+    Eigen::MatrixXd kernel = Eigen::MatrixXd::Zero(dim, dim);
 
     // Convierte a tipo numérico común
     double pow_scale_var = scale * variance;
     double pow_bias = bias * bias;
 
-
-    // Convierte la matriz a tipo numérico común
-    kernel = kernel.cast<double>();
-
     for (int i = 0; i < num_active_dims; ++i) {
         int d = active_dims(i);
-        for (int j = 0; j <= degree; ++j) {
-            for (int k = 0; k <= degree; ++k) {
-                // Realiza las operaciones con los mismos tipos
-                //kernel(d, d) += pow_scale_var;// std::pow(pow_scale_var, j + k)* std::pow(pow_bias, j)* std::pow(pow_bias, k);
+        if (d < dim && d >= 0) {
+            for (int j = 0; j <= degree; ++j) {
+                for (int k = 0; k <= degree; ++k) {
+                    // Realiza las operaciones con los mismos tipos
+                    kernel(d, d) += std::pow(pow_scale_var, j + k) * std::pow(pow_bias, j) * std::pow(pow_bias, k);
+                }
             }
         }
     }
