@@ -7,6 +7,7 @@
 #include <numeric>
 #include <iostream>
 #include <random>
+#include "network.h"
 
 /*
 #include <GPy/GPy.hpp>
@@ -24,43 +25,49 @@ using namespace Eigen;*/
 IDEA: herencia player padre del resto de jugadores para tratar todos los jugadores en auxiliar.
 plus: se podría crear un .h y un .cpp para player y otro para cada tipo.
 */
+
+
 class Player {
-public:
-    // habría que meter funciones comunes -> update, mixed strategy, sample action y constructor?
-private:
-    // atributos comunes ?
-    std::string tipo; // tipo de player, puede ser enumerado
-};
-
-
-class Player_Hedge {
-public:
-    Player_Hedge(int K, double T, double min_payoff, double max_payoff);
-
-    std::vector<double> mixed_strategy();
-    int sample_action();
-    void Update(std::vector<int> played_actions, int player_idx, std::vector<std::vector<double>> SiouxNetwork_data_original, std::vector<double> Capacities_t, std::vector<std::vector<double>> Strategy_vectors);
-    // Funciones auxiliares 
-    int get_K() const { return K_; }
-    double get_T() const { return T_; }
-    double get_min_payoff() const { return min_payoff_; }
-    double get_max_payoff() const { return max_payoff_; }
-    std::string to_string() const;
-
-
-private:
-    std::string type_;
+protected:
+    //Playertype type_;
     int K_;
     double min_payoff_;
     double max_payoff_;
     std::vector<double> weights_;
     double T_;
     double gamma_t_;
+
+public:
+
+};
+
+
+class Player_Hedge : public Player {
+public:
+    Player_Hedge(int K, double T, double min_payoff, double max_payoff) {
+        this->K_ = K;
+        this->T_ = T;
+        this->min_payoff_ = min_payoff;
+        this->max_payoff_ = max_payoff;
+        this->gamma_t_ = (sqrt(8 * log(K) / T));// tasa aprendizaje
+        //this->type_ = Playertype::Hedge;
+        this->weights_ = std::vector<double>(K, 1); // para cada brazo el valor inicial en la distribución es 1
+    }
+
+    std::vector<double> mixed_strategy();
+    int sample_action();
+    void Update(std::vector<int> played_actions, int player_idx, const NetworkData& network, std::vector<double> Capacities_t, std::vector<std::vector<std::vector<int>>> Strategy_vectors);
+    // Funciones auxiliares 
+    int get_K() const { return K_; }
+    double get_T() const { return T_; }
+    double get_min_payoff() const { return min_payoff_; }
+    double get_max_payoff() const { return max_payoff_; }
+    std::string to_string() const;   
 };
 
 /*
 Player GPMW
-*/
+*//*
 
 class Player_GPMW {
 public:

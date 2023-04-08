@@ -2,7 +2,7 @@
 
 
 
-void Initialize_Players(int N, std::vector<std::string> OD_pairs, std::vector<std::vector<std::vector<double>>> Strategy_vectors, std::vector<double> min_traveltimes, std::vector<double> max_traveltimes, std::vector<int> idxs_controlled, double T, std::string Algo, int version, std::vector<double> Sigma, std::vector<std::vector<double>> Kernels, std::vector<double> sigmas, int numberofcontexts, std::vector<std::vector<int>> Capacities, std::vector<Player*>& Players) {
+void Initialize_Players(int N, const std::vector<std::pair<int, int>>& od_Pairs, std::vector<std::vector<std::vector<int>>> Strategy_vectors, std::vector<double> min_traveltimes, std::vector<double> max_traveltimes, std::vector<int> idxs_controlled, double T, std::string Algo, int version, std::vector<double> Sigma, std::vector<Eigen::MatrixXd>& Kernels, std::vector<double> sigmas, int numberofcontexts, std::vector<std::vector<double>> Capacities, std::vector<Player*>& Players) {
     for (int i = 0; i < N; i++) {
         int K_i = Strategy_vectors[i].size();
         double min_payoff = -max_traveltimes[i]; // min recompensa = - max tiempo viaje
@@ -11,7 +11,7 @@ void Initialize_Players(int N, std::vector<std::string> OD_pairs, std::vector<st
         // idxs son los ids de los agentes que son controlados
         if (find(idxs_controlled.begin(), idxs_controlled.end(), i) != idxs_controlled.end() && K_i > 1) { // si el agente está controlado por el agente y tiene más de un brazo
             if (Algo == "Hedge") {
-                //Players[i] = new Player_Hedge(K_i, T, min_payoff, max_payoff);
+                Players[i] = new Player_Hedge(K_i, T, min_payoff, max_payoff);
             }
             else if (Algo == "GPMW") {
                 //Players[i] = new Player_GPMW(K_i, T, min_payoff, max_payoff, Strategy_vectors[i][0], Kernels[i][0], sigmas[i]);

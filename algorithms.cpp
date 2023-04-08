@@ -1,29 +1,19 @@
 #include "algorithms.h"
 
 
-Player_Hedge::Player_Hedge(int K, double T, double min_payoff, double max_payoff) :
-    K_(K),
-    min_payoff_(min_payoff),
-    max_payoff_(max_payoff),
-    weights_(K, 1),
-    T_(T),
-    gamma_t_(sqrt(8 * log(K) / T)) { // tasa aprendizaje
-    type_ = "Hedge";
-}
-
 std::vector<double> Player_Hedge::mixed_strategy() {
     std::vector<double> strategy(K_);
     // strategy representa la probabilidad de elegir cada accion
     double sum_weights = accumulate(weights_.begin(), weights_.end(), 0.0);
     for (int i = 0; i < K_; i++) {
-        strategy[i] = weights_[i] / sum_weights;
+        strategy[i] = weights_[i] / sum_weights; // de esa forma se consigue que cada estrategia/brazo tenga un aprobabilidad de ser elegida entre 0 y 1 de forma ponderada con el resto de brazos
     }
     return strategy;
 }
 
 int Player_Hedge::sample_action() {
     std::vector<double> strategy = mixed_strategy();
-    double r = ((double)rand() / RAND_MAX);
+    double r = ((double)rand() / RAND_MAX); // de esta forma se consigue que r tenga un valor entre 0 y 1
     double sum_prob = 0.0;
     for (int i = 0; i < K_; i++) {
         sum_prob += strategy[i];
@@ -34,40 +24,28 @@ int Player_Hedge::sample_action() {
     return K_ - 1; // In case of numerical errors
 }
 
-
-
-
-std::string Player_Hedge::to_string() const {
-    std::string str = "Type: " + type_ + "\n" +
-        "K: " + std::to_string(K_) + "\n" +
-        "T: " + std::to_string(T_) + "\n" +
-        "Min Payoff: " + std::to_string(min_payoff_) + "\n" +
-        "Max Payoff: " + std::to_string(max_payoff_) + "\n";
-    return str;
-}
-
-
-void Player_Hedge::Update(std::vector<int> played_actions, int player_idx, std::vector<std::vector<double>> SiouxNetwork_data_original, std::vector<double> Capacities_t, std::vector<std::vector<double>> Strategy_vectors) {
+void Player_Hedge::Update(std::vector<int> played_actions, int player_idx, const NetworkData &network, std::vector<double> Capacities_t, std::vector<std::vector<std::vector<int>>> Strategy_vectors) {
     std::vector<double> losses_hindsight(K_);
     for (int a = 0; a < K_; a++) {
         std::vector<int> modified_outcome = played_actions;
-        modified_outcome[player_idx] = a;
+        modified_outcome[player_idx] = a; // modifica el brazo jugado a para ver cual seri ael travel time para los 5 brazos
         //perdidas si hubiera elegido el brazo a
-        losses_hindsight[a] = 2; //Compute_traveltimes(SiouxNetwork_data_original, Strategy_vectors, modified_outcome, player_idx, Capacities_t);
+        std::vector<double> traveltimetmp = Compute_traveltimes(network, Strategy_vectors, modified_outcome, player_idx, Capacities_t);
+        losses_hindsight[a] = traveltimetmp[player_idx];
     }
 
     // Se establecen recompensas por cada accion y se limitan al maximo payoff y minimo payoff
     std::vector<double> payoffs(K_);
     for (int i = 0; i < K_; i++) {
-        payoffs[i] = -losses_hindsight[i];
+        payoffs[i] = -losses_hindsight[i]; // las recompensas son los tiempos de viaje en negativo (cuanto menos tiempo de viaje, mejor recompensa)
         payoffs[i] = std::max(payoffs[i], min_payoff_);
-        payoffs[i] = std::min(payoffs[i], max_payoff_);
+        payoffs[i] = std::min(payoffs[i], max_payoff_); // delimitar entre min y maximo
     }
 
     // Se limitan los recompensas para cada brazo para que esten entre el intervalo 0 y 1
     std::vector<double> payoffs_scaled(K_);
     for (int i = 0; i < K_; i++) {
-        payoffs_scaled[i] = (payoffs[i] - min_payoff_) / (max_payoff_ - min_payoff_);
+        payoffs_scaled[i] = (payoffs[i] - min_payoff_) / (max_payoff_ - min_payoff_); // - / - = +
     }
 
     // Se calculan las pérdidas sobre 1 - recompensas
@@ -80,6 +58,14 @@ void Player_Hedge::Update(std::vector<int> played_actions, int player_idx, std::
     for (int i = 0; i < K_; i++) {
         weights_[i] = weights_[i] * exp(-gamma_t_ * losses[i]);
     }
+    /*
+    Si la pérdida es alta, entonces exp(-gamma_t_ * losses[i]) será un número pequeño y el nuevo peso w_i' será menor que el peso anterior w_i. Por otro lado, si la pérdida es baja o cero, 
+    entonces exp(-gamma_t_ * losses[i]) será cercano a 1, lo que significa que el peso de la estrategia no cambia mucho en esa iteración. En general, el factor de actualización exponencial se 
+    utiliza para ajustar la estrategia del jugador en función de su desempeño anterior, con el objetivo de mejorar su rendimiento en iteraciones futuras del juego.
+    
+    La tasa de aprendizaje hará que el peso se actualice con mayor o menor fuerza respecto a las pérdidas:
+    Si la tasa de aprendizaje es alta las losses tendrán mas efecto en los weights ya que el exponencial sera un numero mayor.
+    */
 
     // Se normalizan los pesos
     double sum_weights = accumulate(weights_.begin(), weights_.end(), 0.0);
@@ -88,7 +74,7 @@ void Player_Hedge::Update(std::vector<int> played_actions, int player_idx, std::
     }
 }
 
-
+/*
 Player_GPMW::Player_GPMW(int K, int T, double min_payoff, double max_payoff, std::vector<std::vector<double>> my_strategy_vecs, double kernel, double sigma_e) {
     type = "GPMW";
     this->K = K;

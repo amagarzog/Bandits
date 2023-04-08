@@ -101,17 +101,20 @@ void Simulation::init(){
 	for (int i = 0; i < max_traveltimes.size(); ++i) {
 		sigmas[i] = 0.001 * (max_traveltimes[i] - min_traveltimes[i]);
 	}
-	// de de momento lo hacemos para cGPMW
-	std::string Algo = "cGPMW";
+	// temporal
+	std::string Algo = "Hedge";
 
 
 
 	std::vector<std::vector<double>> list_of_param_arrays;
 	std::vector<Eigen::MatrixXd> Kernels (this->numplayers);
-	Kernels = Optimize_Kernels(this->reoptimize, Algo, this->idcontrolledplayers, this->Strategy_vectors, sigmas, this->polykernel, Outcomes, Capacities, Payoffs, list_of_param_arrays);
+	if(Algo == "cGMPW")
+		Kernels = Optimize_Kernels(this->reoptimize, Algo, this->idcontrolledplayers, this->Strategy_vectors, sigmas, this->polykernel, Outcomes, Capacities, Payoffs, list_of_param_arrays);
+	
 
-
-
+	// Inicializar jugadores
+	std::vector<Player*> players(this->numplayers);
+	Initialize_Players(this->numplayers, this->od_Pairs, this->Strategy_vectors, min_traveltimes, max_traveltimes, this->idcontrolledplayers, this->rondas, Algo, 0, sigmas, Kernels, sigmas, this->numcontextos, Capacities, players);
 
 
 }
