@@ -311,3 +311,8 @@ void Player_cGPMW::Update_history(int played_action, double payoff, Eigen::Vecto
     history(history.rows() - 1, Eigen::all) = row;
 }
 */
+
+int Player::getK()
+{
+    return this->K_;
+}

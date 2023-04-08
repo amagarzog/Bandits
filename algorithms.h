@@ -38,6 +38,7 @@ protected:
     double gamma_t_;
 
 public:
+    int getK();
 
 };
 
