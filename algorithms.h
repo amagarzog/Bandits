@@ -26,10 +26,15 @@ IDEA: herencia player padre del resto de jugadores para tratar todos los jugador
 plus: se podría crear un .h y un .cpp para player y otro para cada tipo.
 */
 
+enum class PlayerType {
+    cGPMW,
+    Hedge,
+    cGPMWpar
+};
 
 class Player {
 protected:
-    //Playertype type_;
+    PlayerType type_;
     int K_;
     double min_payoff_;
     double max_payoff_;
@@ -38,7 +43,12 @@ protected:
     double gamma_t_;
 
 public:
+
+    virtual int sample_action();
+    virtual void Update(std::vector<int> played_actions, int player_idx, const NetworkData& network, std::vector<double> Capacities_t, std::vector<std::vector<std::vector<int>>> Strategy_vectors);
+
     int getK();
+    PlayerType getType();
 
 };
 
@@ -56,14 +66,13 @@ public:
     }
 
     std::vector<double> mixed_strategy();
-    int sample_action();
+    int sample_action() override;
     void Update(std::vector<int> played_actions, int player_idx, const NetworkData& network, std::vector<double> Capacities_t, std::vector<std::vector<std::vector<int>>> Strategy_vectors);
     // Funciones auxiliares 
     int get_K() const { return K_; }
     double get_T() const { return T_; }
     double get_min_payoff() const { return min_payoff_; }
     double get_max_payoff() const { return max_payoff_; }
-    std::string to_string() const;   
 };
 
 /*

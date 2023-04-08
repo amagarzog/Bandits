@@ -1,9 +1,9 @@
 #include "auxiliar.h"
 
-GameData:: GameData(int N){
-    this->Played_actions = std::vector<int>(N);
+GameData:: GameData(int N, int T){
+    this->Played_actions = std::vector<std::vector<int>>(T);
     this->Mixed_strategies = std::vector<double>(N); // ??
-    this->Incurred_losses = std::vector<double>(N);
+    this->Incurred_losses = std::vector<std::vector<double>>(T);
     this->Regrets = std::vector<double>(N);
     this->Cum_losses = std::vector<std::vector<double>>(N);
 }
@@ -11,7 +11,6 @@ GameData:: GameData(int N){
 void GameData::Simulate_Game(int run, std::vector<Player*>& Players, int T, const NetworkData& network, std::vector<std::vector<std::vector<int>>>& Strategy_vectors, std::vector<double>& sigmas, std::vector<std::vector<double>>& Capacities, std::vector<std::vector<double>>& Total_occupancies, std::vector<std::vector<double>>& addit_Congestions, const std::vector<int>& Contexts)
 {
     int N = Players.size();
-    GameData Game_data(N);
 
     for (int i = 0; i < N; ++i) {
         // cum loses sera N X K, hay cum loses para cada brazo
@@ -22,40 +21,53 @@ void GameData::Simulate_Game(int run, std::vector<Player*>& Players, int T, cons
 
     std::vector<double> original_capacities = getCapacities(network);
 
-    // Computar acciones jugadas
-    /*for (int t = 0; t < T; ++t) {
-        std::vector<int> Capacities_t(Capacities[Contexts != nullptr ? (*Contexts)[t] : 0]);
+    for (int t = 0; t < T; ++t) {
+        std::vector<double> Capacities_t = Capacities[Contexts[t]]; // se coge la capacidad en la ronda t en funcion del contexto en esa ronda
         std::vector<int> played_actions_t(N);
+
+        // 1 - Cada jugador juega una acción
         for (int i = 0; i < N; ++i) {
-
-            if (Players[i]->type == "cGPMW" && t > 0) {
-                Players[i]->Compute_strategy(Capacities_t);
+            if (Players[i]->getType() == PlayerType::cGPMW && t > 0) {
+                //Players[i]->Compute_strategy(Capacities_t); // compute strategy es del cGPMW
             }
-            played_actions_t[i] = Players[i]->sample_action();
+            played_actions_t[i] = Players[i]->sample_action();  // Los jugadores no controlados van a usar siempre su único brazo que es el 0
+        }
+        
+        
+        this->Played_actions[t] = played_actions_t; // Guarda las acciones de todos los jugadores de la ronda t
 
+        // 2 - Asignar Recompensas
+
+        int identificador = -1; // Se asigna el identificador -1 para que compute travel times calcule los tiempos para todos los jugadores
+        std::vector<double> losses_t = Compute_traveltimes(network, Strategy_vectors, this->Played_actions[t], identificador, Capacities_t);
+        this->Incurred_losses[t] = losses_t ;
+
+        int E = Strategy_vectors[0][0].size(); // numero de carreteras
+        Total_occupancies.push_back(std::vector<double>(E, 0.0)); 
+        
+        /* Cada occupancies (cada ronda) guarda lo que se ocupa cada carretera sumando 
+        * lo que usan los jugadores estas carreteras mediante las estrategias o brazos elegidos
+        */
+        std::vector<double> congestions(E, 0.0);
+
+        for (int i = 0; i < N; ++i) {
+            int aux = Strategy_vectors[i][this->Played_actions[t][i]].size();
+            for (int j = 0; j < aux; ++j) { // 76 carreteras: sumar lo que ocupa en total la estrategia de cada jugador en las 76 carreteras
+                Total_occupancies[t][j] += Strategy_vectors[i][this->Played_actions[t][i]][j]; // en cada total occupancies se guarda todo lo que ocupa un jugador en todas sus carreteras del brazo
+
+            }
+
+            for (int e = 0; e < Capacities_t.size(); ++e) {
+                congestions[e] = 0.15 * std::pow(Total_occupancies[t][e] / Capacities_t[e], 4);
+            }
 
         }
-        Game_data.Played_actions[t] = played_actions_t;
+        addit_Congestions[t] = congestions;
 
-        // Asignar remordimientos
-        //std::vector<double> losses_t = Compute_traveltimes(SiouxNetwork_data_original, Strategy_vectors, Game_data.Played_actions[t], "all", Capacities_t);
-        //Game_data.Incurred_losses.push_back(losses_t);
-
-        //Total_occupancies.push_back(std::vector<double>(Strategy_vectors[0].size(), 0.0));
-        for (int i = 0; i < N; ++i) {
-            for (int j = 0; j < Strategy_vectors[i].size(); ++j) {
-                Total_occupancies[t][j] += Strategy_vectors[i][Game_data.Played_actions[t][i]][j];
-
-            }
-
-            std::vector<double> congestions(Capacities_t.size(), 0.0);
-            for (int i = 0; i < Capacities_t.size(); ++i) {
-                congestions[i] = 0.15 * std::pow(Total_occupancies[t][i] / Capacities_t[i], 4);
-            }
-            addit_Congestions.push_back(congestions);
-
-
-            // Actualizar estrategias
+        int b;
+        int a = 253;
+            /*
+            // 3 - Actualizar estrategias
             for (int i = 0; i < N; ++i) {
 
                 if (Players[i].type == "Hedge") {
@@ -84,13 +96,12 @@ void GameData::Simulate_Game(int run, std::vector<Player*>& Players, int T, cons
             }
 
             avg_cong /= addit_Congestions.size();
-
+            */
             //cout << Players[2].type << " run: " << run + 1 << ", time: " << t << ", Avg cong. " << fixed << setprecision(2) << avg_cong << endl;
         }
-        return Game_data;*/
 }
 
-void Initialize_Players(int N, const std::vector<std::pair<int, int>>& od_Pairs, std::vector<std::vector<std::vector<int>>> Strategy_vectors, std::vector<double> min_traveltimes, std::vector<double> max_traveltimes, std::vector<int> idxs_controlled, double T, std::string Algo, int version, std::vector<double> Sigma, std::vector<Eigen::MatrixXd>& Kernels, std::vector<double> sigmas, int numberofcontexts, std::vector<std::vector<double>> Capacities, std::vector<Player*>& Players) {
+void Initialize_Players(int N, const std::vector<std::pair<int, int>>& od_Pairs, std::vector<std::vector<std::vector<int>>> &Strategy_vectors, std::vector<double> min_traveltimes, std::vector<double> max_traveltimes, std::vector<int> idxs_controlled, double T, std::string Algo, int version, std::vector<double> Sigma, std::vector<Eigen::MatrixXd>& Kernels, std::vector<double> sigmas, int numberofcontexts, std::vector<std::vector<double>> Capacities, std::vector<Player*>& Players) {
     for (int i = 0; i < N; i++) {
         int K_i = Strategy_vectors[i].size();
         double min_payoff = -max_traveltimes[i]; // min recompensa = - max tiempo viaje
@@ -111,6 +122,9 @@ void Initialize_Players(int N, const std::vector<std::pair<int, int>>& od_Pairs,
         else {
             K_i = 1;
             Players[i] = new Player_Hedge(K_i, T, min_payoff, max_payoff);
+            for(int brazoborrado = 0;brazoborrado < 4; brazoborrado++)
+                Strategy_vectors[i].pop_back();
+            //eliminar 4 estrategias?
         }
         //Players[i]->OD_pair = OD_pairs[i]; 
         // ODPairs es una lista de pares donde cada i corresponde al agente

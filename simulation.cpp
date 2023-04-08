@@ -114,10 +114,11 @@ void Simulation::init(){
 	Initialize_Players(this->numplayers, this->od_Pairs, this->Strategy_vectors, min_traveltimes, max_traveltimes, this->idcontrolledplayers, this->rondas, this->Algo, 0, sigmas, Kernels, sigmas, this->numcontextos, Capacities, players);
 	
 	
+	// Simulate Game
 	int run = 1;
-	std::vector<std::vector<double>> addit_Congestions;
+	std::vector<std::vector<double>> addit_Congestions (this->rondas);
 	std::vector<std::vector<double>> Total_occupancies;
-	GameData game = GameData(this->numplayers);
+	GameData game = GameData(this->numplayers, this->rondas);
 	game.Simulate_Game(run, players, this->rondas, this->network, this->Strategy_vectors, sigmas, Capacities, Total_occupancies, addit_Congestions, Contexts);
 
 

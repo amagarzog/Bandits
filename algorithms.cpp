@@ -312,7 +312,21 @@ void Player_cGPMW::Update_history(int played_action, double payoff, Eigen::Vecto
 }
 */
 
+int Player::sample_action()
+{
+    return 0;
+}
+
+void Player::Update(std::vector<int> played_actions, int player_idx, const NetworkData& network, std::vector<double> Capacities_t, std::vector<std::vector<std::vector<int>>> Strategy_vectors)
+{
+}
+
 int Player::getK()
 {
     return this->K_;
+}
+
+PlayerType Player::getType()
+{
+    return this->type_;
 }
