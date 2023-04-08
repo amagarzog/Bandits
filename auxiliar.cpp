@@ -5,18 +5,18 @@ GameData:: GameData(int N, int T){
     this->Mixed_strategies = std::vector<double>(N); 
     this->Incurred_losses = std::vector<std::vector<double>>(T);
     this->Regrets = std::vector<double>(N);
-    this->Cum_losses = std::vector<std::vector<double>>(N);
+    this->Cum_losses = std::vector<std::vector<double>>(T);
 }
 
 void GameData::Simulate_Game(int run, std::vector<Player*>& Players, int T, const NetworkData& network, std::vector<std::vector<std::vector<int>>>& Strategy_vectors, std::vector<double>& sigmas, std::vector<std::vector<double>>& Capacities, std::vector<std::vector<double>>& Total_occupancies, std::vector<std::vector<double>>& addit_Congestions, const std::vector<int>& Contexts)
 {
     int N = Players.size();
 
-    for (int i = 0; i < N; ++i) {
+    /*for (int i = 0; i < N; ++i) {
         // cum loses sera N X K, hay cum loses para cada brazo
         int brazosJugadorI = Players[i]->getK();
         this->Cum_losses[i].resize(brazosJugadorI);
-    }
+    }*/
 
 
     std::vector<double> original_capacities = getCapacities(network);
@@ -41,6 +41,16 @@ void GameData::Simulate_Game(int run, std::vector<Player*>& Players, int T, cons
         int identificador = -1; // Se asigna el identificador -1 para que compute travel times calcule los tiempos para todos los jugadores
         std::vector<double> losses_t = Compute_traveltimes(network, Strategy_vectors, this->Played_actions[t], identificador, Capacities_t);
         this->Incurred_losses[t] = losses_t ;
+
+        // Calculamos perdidas acumuladas 
+        if (t > 0) {
+            std::vector<double> cum_losses_t(N);
+            for (int i = 0; i < N; i++) {
+                cum_losses_t[i] = this->Cum_losses[t - 1][i] + this->Incurred_losses[t][i];
+            }
+            this->Cum_losses[t] = cum_losses_t;
+        }
+        else this->Cum_losses[t] = losses_t;
 
         int E = Strategy_vectors[0][0].size(); // numero de carreteras
         Total_occupancies.push_back(std::vector<double>(E, 0.0)); 

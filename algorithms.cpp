@@ -74,6 +74,42 @@ void Player_Hedge::Update(std::vector<int> played_actions, int player_idx, const
     }
 }
 
+
+std::vector<double> Player_GPMW::mixed_strategy() {
+    std::vector<double> strategy(K_);
+    // strategy representa la probabilidad de elegir cada accion
+    double sum_weights = accumulate(weights_.begin(), weights_.end(), 0.0);
+    for (int i = 0; i < K_; i++) {
+        strategy[i] = weights_[i] / sum_weights; // de esa forma se consigue que cada estrategia/brazo tenga un aprobabilidad de ser elegida entre 0 y 1 de forma ponderada con el resto de brazos
+    }
+    return strategy;
+}
+
+int Player_GPMW::sample_action() {
+    std::vector<double> strategy = mixed_strategy();
+    double r = ((double)rand() / RAND_MAX); // de esta forma se consigue que r tenga un valor entre 0 y 1
+    double sum_prob = 0.0;
+    for (int i = 0; i < K_; i++) {
+        sum_prob += strategy[i];
+        if (r <= sum_prob) {
+            return i; // se elige la acción
+        }
+    }
+    return K_ - 1; // en caso de errores numericos
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 /*
 Player_GPMW::Player_GPMW(int K, int T, double min_payoff, double max_payoff, std::vector<std::vector<double>> my_strategy_vecs, double kernel, double sigma_e) {
     type = "GPMW";
