@@ -16,6 +16,7 @@ void Simulation::selectParameters(){
 	this->numcontextos = 10;
 	this->polykernel = 4;
 	this->reoptimize = false;
+	this->Algo = "Hedge";
 }
 
 void Simulation::init(){
@@ -101,21 +102,20 @@ void Simulation::init(){
 	for (int i = 0; i < max_traveltimes.size(); ++i) {
 		sigmas[i] = 0.001 * (max_traveltimes[i] - min_traveltimes[i]);
 	}
-	// temporal
-	std::string Algo = "Hedge";
-
-
 
 	std::vector<std::vector<double>> list_of_param_arrays;
 	std::vector<Eigen::MatrixXd> Kernels (this->numplayers);
-	if(Algo == "cGMPW")
-		Kernels = Optimize_Kernels(this->reoptimize, Algo, this->idcontrolledplayers, this->Strategy_vectors, sigmas, this->polykernel, Outcomes, Capacities, Payoffs, list_of_param_arrays);
+	if(this->Algo == "cGMPW")
+		Kernels = Optimize_Kernels(this->reoptimize, this->Algo, this->idcontrolledplayers, this->Strategy_vectors, sigmas, this->polykernel, Outcomes, Capacities, Payoffs, list_of_param_arrays);
 	
 
 	// Inicializar jugadores
 	std::vector<Player*> players(this->numplayers);
-	Initialize_Players(this->numplayers, this->od_Pairs, this->Strategy_vectors, min_traveltimes, max_traveltimes, this->idcontrolledplayers, this->rondas, Algo, 0, sigmas, Kernels, sigmas, this->numcontextos, Capacities, players);
-
+	Initialize_Players(this->numplayers, this->od_Pairs, this->Strategy_vectors, min_traveltimes, max_traveltimes, this->idcontrolledplayers, this->rondas, this->Algo, 0, sigmas, Kernels, sigmas, this->numcontextos, Capacities, players);
+	
+	
+	std::vector<std::vector<double>> addit_Congestions;
+	//GameData game = Simulate_Game()
 
 }
 

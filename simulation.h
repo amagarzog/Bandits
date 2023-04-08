@@ -26,6 +26,7 @@ private:
 	// players
 	int numplayers, controlledplayers;
 	std::vector<int> idcontrolledplayers;
+	std::string Algo;
 
 	// network
 	NetworkData network;

@@ -1,5 +1,14 @@
 #include "auxiliar.h"
 
+GameData:: GameData(int N){
+    this->Played_actions = std::vector<int>(N);
+    this->Mixed_strategies = std::vector<double>(N); // ??
+    this->Incurred_losses = std::vector<double>(N);
+    this->Regrets = std::vector<double>(N);
+    this->Cum_losses = std::vector<std::vector<double>>(N);
+}
+
+
 
 
 void Initialize_Players(int N, const std::vector<std::pair<int, int>>& od_Pairs, std::vector<std::vector<std::vector<int>>> Strategy_vectors, std::vector<double> min_traveltimes, std::vector<double> max_traveltimes, std::vector<int> idxs_controlled, double T, std::string Algo, int version, std::vector<double> Sigma, std::vector<Eigen::MatrixXd>& Kernels, std::vector<double> sigmas, int numberofcontexts, std::vector<std::vector<double>> Capacities, std::vector<Player*>& Players) {
@@ -22,7 +31,7 @@ void Initialize_Players(int N, const std::vector<std::pair<int, int>>& od_Pairs,
         }
         else {
             K_i = 1;
-            //Players[i] = new Player_Hedge(K_i, T, min_payoff, max_payoff);
+            Players[i] = new Player_Hedge(K_i, T, min_payoff, max_payoff);
         }
         //Players[i]->OD_pair = OD_pairs[i]; 
         // ODPairs es una lista de pares donde cada i corresponde al agente
@@ -30,8 +39,8 @@ void Initialize_Players(int N, const std::vector<std::pair<int, int>>& od_Pairs,
 
 }
 
-/*
-GameData Simulate_Game(int run, std::vector<Player*>& Players, int T, SiouxNetwork_data_original& SiouxNetwork_data_original, Strategy_vectors& Strategy_vectors, std::vector<double>& sigmas, std::vector<std::vector<int>>& Capacities, std::vector<std::vector<double>>& Total_occupancies, std::vector<std::vector<double>>& addit_Congestions, std::vector<int>* Contexts)
+
+GameData Simulate_Game(int run, std::vector<Player*>& Players, int T, const NetworkData& network, std::vector<std::vector<std::vector<int>>>& Strategy_vectors, std::vector<double>& sigmas, std::vector<std::vector<double>>& Capacities, std::vector<std::vector<double>>& Total_occupancies, std::vector<std::vector<double>>& addit_Congestions, const std::vector<int>& Contexts)
 {
    int N = Players.size();
     GameData Game_data(N);
@@ -41,13 +50,13 @@ GameData Simulate_Game(int run, std::vector<Player*>& Players, int T, SiouxNetwo
     }
 
     //std::vector<double> original_capacities(SiouxNetwork_data_original.Capacities);
-
+    /*
     // Computar acciones jugadas
     for (int t = 0; t < T; ++t) {
         std::vector<int> Capacities_t(Capacities[Contexts != nullptr ? (*Contexts)[t] : 0]);
         std::vector<int> played_actions_t(N);
         for (int i = 0; i < N; ++i) {
-            /*
+            
             if (Players[i]->type == "cGPMW" && t > 0) {
                 Players[i]->Compute_strategy(Capacities_t);
             }
@@ -63,7 +72,7 @@ GameData Simulate_Game(int run, std::vector<Player*>& Players, int T, SiouxNetwo
 
         //Total_occupancies.push_back(std::vector<double>(Strategy_vectors[0].size(), 0.0));
         for (int i = 0; i < N; ++i) {
-            /*for (int j = 0; j < Strategy_vectors[i].size(); ++j) {
+            for (int j = 0; j < Strategy_vectors[i].size(); ++j) {
                 Total_occupancies[t][j] += Strategy_vectors[i][Game_data.Played_actions[t][i]][j];
             
         }
@@ -77,7 +86,7 @@ GameData Simulate_Game(int run, std::vector<Player*>& Players, int T, SiouxNetwo
 
         // Actualizar estrategias
         for (int i = 0; i < N; ++i) {
-            /*
+            
             if (Players[i].type == "Hedge") {
                  Players[i].Update(Game_data.Played_actions[t], i, SiouxNetwork_data_original, Capacities_t, Strategy_vectors);
              }
@@ -106,10 +115,10 @@ GameData Simulate_Game(int run, std::vector<Player*>& Players, int T, SiouxNetwo
         avg_cong /= addit_Congestions.size();
 
         //cout << Players[2].type << " run: " << run + 1 << ", time: " << t << ", Avg cong. " << fixed << setprecision(2) << avg_cong << endl;
-    }
+    }*/
     return Game_data;
 }
-*/
+
 
 std::vector<Eigen::MatrixXd> Optimize_Kernels(bool reoptimize, std::string Algo,  const std::vector<int>& idxs_controlled, const std::vector<std::vector<std::vector<int>>>& Strategy_vectors, const std::vector<double>& sigmas, int poly_degree, const std::vector<std::vector<double>>& Outcomes, const std::vector<std::vector<double>>& Capacities, const std::vector<std::vector<double>>& Payoffs, std::vector<std::vector<double>>& list_of_param_arrays)
 {
@@ -315,4 +324,4 @@ std::tuple<std::vector<GPy::Kern*>, std::vector<MatrixXd>> Optimize_Kernels(bool
     }
 
     return Kernels, list_of_param_arrays;
-}*/
+}
