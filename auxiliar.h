@@ -24,9 +24,9 @@ public:
     
 private:
     std::vector<std::vector<int>> Played_actions;
-    std::vector<double> Mixed_strategies;
+    std::vector<double> Mixed_strategies; // no se usa
     std::vector<std::vector<double>> Incurred_losses;
-    std::vector<double> Regrets;
+    std::vector<double> Regrets; // no se usa
     std::vector<std::vector<double>> Cum_losses;
 };
 

@@ -29,7 +29,7 @@ plus: se podría crear un .h y un .cpp para player y otro para cada tipo.
 enum class PlayerType {
     cGPMW,
     Hedge,
-    cGPMWpar
+    GPMW
 };
 
 class Player {
@@ -61,7 +61,7 @@ public:
         this->min_payoff_ = min_payoff;
         this->max_payoff_ = max_payoff;
         this->gamma_t_ = (sqrt(8 * log(K) / T));// tasa aprendizaje
-        //this->type_ = Playertype::Hedge;
+        this->type_ = PlayerType::Hedge;
         this->weights_ = std::vector<double>(K, 1); // para cada brazo el valor inicial en la distribución es 1
     }
 

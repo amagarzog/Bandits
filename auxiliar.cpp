@@ -2,7 +2,7 @@
 
 GameData:: GameData(int N, int T){
     this->Played_actions = std::vector<std::vector<int>>(T);
-    this->Mixed_strategies = std::vector<double>(N); // ??
+    this->Mixed_strategies = std::vector<double>(N); 
     this->Incurred_losses = std::vector<std::vector<double>>(T);
     this->Regrets = std::vector<double>(N);
     this->Cum_losses = std::vector<std::vector<double>>(N);
@@ -36,7 +36,7 @@ void GameData::Simulate_Game(int run, std::vector<Player*>& Players, int T, cons
         
         this->Played_actions[t] = played_actions_t; // Guarda las acciones de todos los jugadores de la ronda t
 
-        // 2 - Asignar Recompensas
+        // 2 - Asignar Recompensas/losses
 
         int identificador = -1; // Se asigna el identificador -1 para que compute travel times calcule los tiempos para todos los jugadores
         std::vector<double> losses_t = Compute_traveltimes(network, Strategy_vectors, this->Played_actions[t], identificador, Capacities_t);
@@ -63,41 +63,38 @@ void GameData::Simulate_Game(int run, std::vector<Player*>& Players, int T, cons
 
         }
         addit_Congestions[t] = congestions;
+            
+        // 3 - Actualizar estrategias
+        for (int i = 0; i < N; ++i) {
 
-        int b;
-        int a = 253;
-            /*
-            // 3 - Actualizar estrategias
-            for (int i = 0; i < N; ++i) {
-
-                if (Players[i].type == "Hedge") {
-                    Players[i].Update(Game_data.Played_actions[t], i, SiouxNetwork_data_original, Capacities_t, Strategy_vectors);
-                }
-                if (Players[i].type == "GPMW") {
-                    double noisy_loss = Game_data.Incurred_losses[t][i] + normal_distribution<double>(0, sigmas[i])(rng);
-                    Players[i].Update(Game_data.Played_actions[t][i], Total_occupancies.back(), -noisy_loss, Capacities_t);
-                }
-
-                if (Players[i].type == "cGPMW") {
-                    double noisy_loss = Game_data.Incurred_losses[t][i] + normal_distribution<double>(0, sigmas[i])(rng);
-                    Players[i].Update_history(Game_data.Played_actions[t][i], -noisy_loss, Total_occupancies.back(), Capacities_t);
-                }
-
+            if (Players[i]->getType() == PlayerType::Hedge) {
+                if(Players[i]->getK() > 1)
+                    Players[i]->Update(this->Played_actions[t], i, network, Capacities_t, Strategy_vectors);
+            }
+            if (Players[i]->getType() == PlayerType::GPMW) {
+                //double noisy_loss = Game_data.Incurred_losses[t][i] + normal_distribution<double>(0, sigmas[i])(rng);
+                //Players[i].Update(Game_data.Played_actions[t][i], Total_occupancies.back(), -noisy_loss, Capacities_t);
             }
 
-
-            double avg_cong = 0;
-            for (int i = 0; i < addit_Congestions.size(); i++) {
-                double sum = 0;
-                for (int j = 0; j < addit_Congestions[i].size(); j++) {
-                    sum += addit_Congestions[i][j];
-                }
-                avg_cong += sum / addit_Congestions[i].size();
+            if (Players[i]->getType() == PlayerType::cGPMW) {
+                //double noisy_loss = Game_data.Incurred_losses[t][i] + normal_distribution<double>(0, sigmas[i])(rng);
+                //Players[i].Update_history(Game_data.Played_actions[t][i], -noisy_loss, Total_occupancies.back(), Capacities_t);
             }
 
-            avg_cong /= addit_Congestions.size();
-            */
-            //cout << Players[2].type << " run: " << run + 1 << ", time: " << t << ", Avg cong. " << fixed << setprecision(2) << avg_cong << endl;
+        }
+
+
+        double avg_cong = 0;
+        for (int i = 0; i < addit_Congestions.size(); i++) {
+            double sum = 0;
+            for (int j = 0; j < addit_Congestions[i].size(); j++) {
+                sum += addit_Congestions[i][j];
+            }
+            avg_cong += sum / addit_Congestions[i].size();
+        }
+
+        avg_cong /= addit_Congestions.size();
+        //cout << Players[2].type << " run: " << run + 1 << ", time: " << t << ", Avg cong. " << fixed << setprecision(2) << avg_cong << endl;
         }
 }
 

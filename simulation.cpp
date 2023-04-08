@@ -120,7 +120,10 @@ void Simulation::init(){
 	std::vector<std::vector<double>> Total_occupancies;
 	GameData game = GameData(this->numplayers, this->rondas);
 	game.Simulate_Game(run, players, this->rondas, this->network, this->Strategy_vectors, sigmas, Capacities, Total_occupancies, addit_Congestions, Contexts);
+	
 
+	// Save Data
+	int data = 32;
 
 }
 
