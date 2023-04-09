@@ -45,7 +45,12 @@ protected:
 public:
 
     virtual int sample_action();
+    //Hedge
     virtual void Update(std::vector<int> played_actions, int player_idx, const NetworkData& network, std::vector<double> Capacities_t, std::vector<std::vector<std::vector<int>>> Strategy_vectors);
+    //GPMW
+    virtual void Update(int played_action, std::vector<double> total_occupancies, double payoff, std::vector<double> Capacities_t);
+    //cGPMW
+    //virtual void Update(std::vector<int> played_actions, int player_idx, const NetworkData& network, std::vector<double> Capacities_t, std::vector<std::vector<std::vector<int>>> Strategy_vectors);
 
     int getK();
     PlayerType getType();
@@ -67,7 +72,7 @@ public:
 
     std::vector<double> mixed_strategy();
     int sample_action() override;
-    void Update(std::vector<int> played_actions, int player_idx, const NetworkData& network, std::vector<double> Capacities_t, std::vector<std::vector<std::vector<int>>> Strategy_vectors);
+    void Update(std::vector<int> played_actions, int player_idx, const NetworkData& network, std::vector<double> Capacities_t, std::vector<std::vector<std::vector<int>>> Strategy_vectors) override;
     // Funciones auxiliares 
     int get_K() const { return K_; }
     double get_T() const { return T_; }
@@ -103,14 +108,14 @@ public:
         this->sigma_e = sigma_e;
         this->strategy_vecs = my_strategy_vector;
 
-        history_payoffs = std::vector<double>();
+        history_payoffs = std::vector<std::vector<double>>();
         history = std::vector<std::vector<double>>(this->idx_nonzeros.size() * 2);
         demand = *std::max_element(my_strategy_vector[0].begin(), my_strategy_vector[0].end());
     }
 
     std::vector<double> mixed_strategy();
-    int sample_action();
-    void Update(int played_action, std::vector<std::vector<double>> total_occupancies, std::vector<double> payoff, std::vector<double> Capacities_t);
+    int sample_action() override;
+    void Update(int played_action, std::vector<double> total_occupancies, double payoff, std::vector<double> Capacities_t) override;
 
 
 private:
@@ -124,7 +129,7 @@ private:
     double sigma_e;
     std::vector<std::vector<int>> strategy_vecs;
 
-    std::vector<double> history_payoffs;
+    std::vector<std::vector<double>> history_payoffs;
     std::vector<std::vector<double>> history;
     double demand;
 };

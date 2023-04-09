@@ -74,7 +74,6 @@ void Player_Hedge::Update(std::vector<int> played_actions, int player_idx, const
     }
 }
 
-
 std::vector<double> Player_GPMW::mixed_strategy() {
     std::vector<double> strategy(K_);
     // strategy representa la probabilidad de elegir cada accion
@@ -99,73 +98,49 @@ int Player_GPMW::sample_action() {
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
 /*
-Player_GPMW::Player_GPMW(int K, int T, double min_payoff, double max_payoff, std::vector<std::vector<double>> my_strategy_vecs, double kernel, double sigma_e) {
-    type = "GPMW";
-    this->K = K;
-    this->min_payoff = min_payoff;
-    this->max_payoff = max_payoff;
-    weights.resize(K, 1.0);
-    this->T = T;
+def Update(self, played_action, total_occupancies, payoff, Capacities_t):
 
-    for (int i = 0; i < my_strategy_vecs[0].size(); i++) {
-        if (std::abs(std::accumulate(my_strategy_vecs.begin(), my_strategy_vecs.end(), 0.0, [i](double sum, std::vector<double> v) {return sum + v[i]; })) > 1e-5) {
-            idx_nonzeros.push_back(i);
-        }
-    }
+        self.history_payoffs = np.vstack((self.history_payoffs, payoff))
+        self.history = np.vstack((self.history, np.concatenate((self.strategy_vecs[played_action][self.idx_nonzeros].T, total_occupancies[self.idx_nonzeros].T), axis=1)))
 
-    cum_losses.resize(K, 0.0);
-    mean_rewards_est.resize(K, 0.0);
-    std_rewards_est.resize(K, 0.0);
-    ucb_rewards_est.resize(K, 0.0);
-    gamma_t = std::sqrt(8 * std::log(K) / T);
-    this->kernel = kernel;
-    this->sigma_e = sigma_e;
-    strategy_vecs = my_strategy_vecs;
+        beta_t = 0.5
 
-    history_payoffs = std::vector<double>();
-    history = std::vector<std::vector<double>>();
-    demand = *std::max_element(my_strategy_vecs[0].begin(), my_strategy_vecs[0].end());
-}
+        m = GPy.models.GPRegression(self.history, self.history_payoffs, self.kernel)
+        m.Gaussian_noise.fix(self.sigma_e ** 2)
 
-std::vector<double> Player_GPMW::mixed_strategy() {
-    double sum_weights = std::accumulate(weights.begin(), weights.end(), 0.0);
-    std::vector<double> mixed(K);
-    for (int i = 0; i < K; i++) {
-        mixed[i] = weights[i] / sum_weights;
-    }
-    return mixed;
-}
+        other_occupancies = total_occupancies[self.idx_nonzeros] - self.strategy_vecs[played_action][self.idx_nonzeros]
+        for a1 in range(self.K):
+            x1 = self.strategy_vecs[a1][self.idx_nonzeros]
+            x2 = other_occupancies + x1
+            mu, var = m.predict(np.concatenate((x1.T, x2.T), axis=1))
+            sigma = np.sqrt(np.maximum(var, 1e-6))
 
-int Player_GPMW::sample_action() {
-    std::vector<double> mixed = mixed_strategy();
-    std::random_device rd;
-    std::mt19937 gen(rd());
-    std::discrete_distribution<> dist(mixed.begin(), mixed.end());
-    return dist(gen);
-}
+            self.ucb_rewards_est[a1] = mu + beta_t * sigma
+            self.mean_rewards_est[a1] = mu
+            self.std_rewards_est[a1] = sigma
 
-/*
+        payoffs = np.array(self.ucb_rewards_est)
+        payoffs = np.maximum(payoffs, self.min_payoff * np.ones(self.K))
+        payoffs = np.minimum(payoffs, self.max_payoff * np.ones(self.K))
+        payoffs_scaled = np.array((payoffs - self.min_payoff) / (self.max_payoff - self.min_payoff))
+        losses = np.ones(self.K) - np.array(payoffs_scaled)
+        self.cum_losses = self.cum_losses + losses
+
+        gamma_t = self.gamma_t
+        self.weights = np.exp(np.multiply(gamma_t, -self.cum_losses))
+*/
+
+
+
+
 
 #include <vector>
 #include <cmath>
 #include <Eigen/Dense>
-#include "GPy/GPy.hpp"
-#include "GPy/kern/GaussianKernel.h"
 
 
-void Update(int played_action, double** total_occupancies, double* payoff, double* Capacities_t) {
+void Update(int played_action, std::vector<double> total_occupancies, double payoff, std::vector<double> Capacities_t) {
     double beta_t = 0.5;
     int K = sizeof(self.strategy_vecs) / sizeof(self.strategy_vecs[0]);
 
@@ -273,10 +248,6 @@ void Update(int played_action, double** total_occupancies, double* payoff, doubl
     delete[] losses;
     delete[] exp_losses;
 }
-
-
-*/
-
 
 
 

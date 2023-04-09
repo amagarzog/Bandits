@@ -28,7 +28,7 @@ void GameData::Simulate_Game(int run, std::vector<Player*>& Players, int T, cons
         // 1 - Cada jugador juega una acción
         for (int i = 0; i < N; ++i) {
             if (Players[i]->getType() == PlayerType::cGPMW && t > 0) {
-                //Players[i]->Compute_strategy(Capacities_t); // compute strategy es del cGPMW
+                //Players[i]->Compute_strategy(Capacities_t); // TODO compute strategy es del cGPMW
             }
             played_actions_t[i] = Players[i]->sample_action();  // Los jugadores no controlados van a usar siempre su único brazo que es el 0
         }
@@ -40,7 +40,7 @@ void GameData::Simulate_Game(int run, std::vector<Player*>& Players, int T, cons
 
         int identificador = -1; // Se asigna el identificador -1 para que compute travel times calcule los tiempos para todos los jugadores
         std::vector<double> losses_t = Compute_traveltimes(network, Strategy_vectors, this->Played_actions[t], identificador, Capacities_t);
-        this->Incurred_losses[t] = losses_t ;
+        this->Incurred_losses[t] = losses_t ; // Incurred_losses[t][player_id] --> para la ronda t devuelve el ARREPENTIMIENTO del jugador player_id
 
         // Calculamos perdidas acumuladas 
         if (t > 0) {
@@ -53,15 +53,15 @@ void GameData::Simulate_Game(int run, std::vector<Player*>& Players, int T, cons
         else this->Cum_losses[t] = losses_t;
 
         int E = Strategy_vectors[0][0].size(); // numero de carreteras
-        Total_occupancies.push_back(std::vector<double>(E, 0.0)); 
+        Total_occupancies.push_back(std::vector<double>(E, 0.0)); // --> Total_occupancies[t][e] para cada ronda (t) muestra la ocupación de la carretera (e) que es la suma de la ocupación que realiza cada jugador (i) de esa carretera en el momento t 
         
         /* Cada occupancies (cada ronda) guarda lo que se ocupa cada carretera sumando 
         * lo que usan los jugadores estas carreteras mediante las estrategias o brazos elegidos
         */
-        std::vector<double> congestions(E, 0.0);
+        std::vector<double> congestions(E, 0.0); 
 
         for (int i = 0; i < N; ++i) {
-            int aux = Strategy_vectors[i][this->Played_actions[t][i]].size();
+            int aux = Strategy_vectors[i][this->Played_actions[t][i]].size(); // aux = nº de carreteras --> hubiese valido con sustituir this->Played_actions[t][i] por 0 pq size() siempre va a devolver el nº de carreteras (76 para todos) y también se contempla el caso en el que solo juegue una acción
             for (int j = 0; j < aux; ++j) { // 76 carreteras: sumar lo que ocupa en total la estrategia de cada jugador en las 76 carreteras
                 Total_occupancies[t][j] += Strategy_vectors[i][this->Played_actions[t][i]][j]; // en cada total occupancies se guarda todo lo que ocupa un jugador en todas sus carreteras del brazo
 
@@ -72,7 +72,7 @@ void GameData::Simulate_Game(int run, std::vector<Player*>& Players, int T, cons
             }
 
         }
-        addit_Congestions[t] = congestions;
+        addit_Congestions[t] = congestions; //addit_Congestions[t][e] muestra la congestion en el momento t de la carretera e
             
         // 3 - Actualizar estrategias
         for (int i = 0; i < N; ++i) {
@@ -80,15 +80,24 @@ void GameData::Simulate_Game(int run, std::vector<Player*>& Players, int T, cons
             if (Players[i]->getType() == PlayerType::Hedge) {
                 if(Players[i]->getK() > 1)
                     Players[i]->Update(this->Played_actions[t], i, network, Capacities_t, Strategy_vectors);
+                    /*Se pasan las elecciones de todos los jugadores (retroalimentación alta), datos de la red, las capacidades de cada carretera en 
+                    el momento t (en cada momento t hay un contexto distinto y por tanto capacidades distintas), y las estrategias de todos los jugadores */
             }
             if (Players[i]->getType() == PlayerType::GPMW) {
-                //double noisy_loss = Game_data.Incurred_losses[t][i] + normal_distribution<double>(0, sigmas[i])(rng);
-                //Players[i].Update(Game_data.Played_actions[t][i], Total_occupancies.back(), -noisy_loss, Capacities_t);
+                double mean = 0.0;  // media
+                double std_dev = sigmas[i];  // desviación estándar
+                std::mt19937 gen(1234);  // semilla del generador de números aleatorios
+                std::normal_distribution<double> dist(mean, std_dev);  // distribución normal
+                double noise = dist(gen);  // generar una muestra aleatoria. dist es un objeto de la clase std::normal_distribution que representa la distribución normal con los parámetros especificados. 
+                double noisy_loss = Incurred_losses[t][i] + noise;
+                Players[i]->Update(this->Played_actions[t][i], Total_occupancies.back(), -noisy_loss, Capacities_t); 
+                /*Se pasan las elecciones de todos los jugadores (retroalimentación baja), la ocupación de las carretereas en la última ronda, errepentimiento ruidoso, y las capacidades de cada carretera en 
+                    el momento t (en cada momento t hay un contexto distinto y por tanto capacidades distintas)*/
             }
 
             if (Players[i]->getType() == PlayerType::cGPMW) {
                 //double noisy_loss = Game_data.Incurred_losses[t][i] + normal_distribution<double>(0, sigmas[i])(rng);
-                //Players[i].Update_history(Game_data.Played_actions[t][i], -noisy_loss, Total_occupancies.back(), Capacities_t);
+                //Players[i]->Update_history(Game_data.Played_actions[t][i], -noisy_loss, Total_occupancies.back(), Capacities_t);
             }
 
         }

@@ -97,7 +97,7 @@ void Simulation::init(){
 
 	// Kernel
 
-	std::vector<double> sigmas(max_traveltimes.size());
+	std::vector<double> sigmas(max_traveltimes.size()); // tamaño = numJugadores --> una desviación típica por cada jugador
 
 	for (int i = 0; i < max_traveltimes.size(); ++i) {
 		sigmas[i] = 0.001 * (max_traveltimes[i] - min_traveltimes[i]);

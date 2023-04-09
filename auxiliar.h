@@ -12,6 +12,7 @@
 #include <random>
 #include <fstream>
 #include <vector>
+#include <random> // para noisy_loss en Simulate_Game()
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 #include "algorithms.h"
