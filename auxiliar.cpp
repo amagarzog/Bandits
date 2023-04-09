@@ -76,7 +76,7 @@ void GameData::Simulate_Game(int run, std::vector<Player*>& Players, int T, cons
             
         // 3 - Actualizar estrategias
         for (int i = 0; i < N; ++i) {
-
+            int as = 2;
             if (Players[i]->getType() == PlayerType::Hedge) {
                 if(Players[i]->getK() > 1)
                     Players[i]->Update(this->Played_actions[t], i, network, Capacities_t, Strategy_vectors);
@@ -129,7 +129,7 @@ void Initialize_Players(int N, const std::vector<std::pair<int, int>>& od_Pairs,
                 Players[i] = new Player_Hedge(K_i, T, min_payoff, max_payoff);
             }
             else if (Algo == "GPMW") {
-                //Players[i] = new Player_GPMW(K_i, T, min_payoff, max_payoff, Strategy_vectors[i][0], Kernels[i][0], sigmas[i]);
+                Players[i] = new Player_GPMW(K_i, T, min_payoff, max_payoff, Strategy_vectors[i], Kernels[i], sigmas[i]);
             }
             else if (Algo == "cGPMW") {
                 //Players[i] = new Player_cGPMW(K_i, T, min_payoff, max_payoff, Capacities[i][0], Strategy_vectors[i][0], Kernels[i][0], sigmas[i], version);

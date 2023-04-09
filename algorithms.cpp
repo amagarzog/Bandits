@@ -1,6 +1,7 @@
 #include "algorithms.h"
 
 
+
 std::vector<double> Player_Hedge::mixed_strategy() {
     std::vector<double> strategy(K_);
     // strategy representa la probabilidad de elegir cada accion
@@ -98,6 +99,79 @@ int Player_GPMW::sample_action() {
 }
 
 
+void Player_GPMW::Update(int played_action, std::vector<double> total_occupancies, double payoff, std::vector<double> Capacities_t)
+{
+    this->history_payoffs.push_back(payoff); 
+    std::vector<double> new_history;
+    for (int i = 0; i < this->idx_nonzeros.size(); ++i) {
+        int idx = this->idx_nonzeros[i];
+        new_history.push_back(this->strategy_vecs[played_action][idx]);
+        new_history.push_back(total_occupancies[idx]);
+    }
+    this->history.push_back(new_history);
+
+    int beta_t = 0.5;
+
+    std::vector<double> other_occupancies(idx_nonzeros.size()); // Las ocupaciones que no son por parte del jugador
+    for (size_t i = 0; i < idx_nonzeros.size(); ++i) {
+        other_occupancies[i] = total_occupancies[idx_nonzeros[i]] - strategy_vecs[played_action][idx_nonzeros[i]];
+    }
+
+
+
+
+    this->played_actions.push_back(played_action);
+    Eigen::MatrixXd x_concatenated(idx_nonzeros.size(), 2); // matriz de idx_nonzeros size filas y dos columnas
+    GaussianProcessRegression<double> regress(this->history.size(), this->history_payoffs.size());
+
+    MatrixXr history_mat(history.size(), history[0].size());
+    MatrixXr history_payoffs_mat(history_payoffs.size(), 1), played_actions_mat(history_payoffs.size(), 1);
+    /*
+    for (int i = 0; i < history.size(); i++) {
+        for (int j = 0; j < history[i].size(); j++) {
+            history_mat(i, j) = history[i][j];
+        }
+    }*/
+
+    for (int i = 0; i < history_payoffs.size(); i++) {
+        history_payoffs_mat(i, 0) = history_payoffs[i];
+        played_actions_mat(i, 0) = played_actions[i];
+
+    }
+
+    regress.AddTrainingDataBatch(played_actions_mat, history_payoffs_mat);
+
+    for (int a = 0; a < this->K_; a++) {
+        /*VectorXr x1(this->idx_nonzeros.size());
+        for (int i = 0; i < idx_nonzeros.size(); i++) {
+            x1(i) = strategy_vecs[a][idx_nonzeros[i]];
+        }
+        VectorXr x2(x1.size());
+        for (int i = 0; i < other_occupancies.size(); i++) { //misma size que idx_nonzeros
+            x2(i) = other_occupancies[i] + x1(i); // total occupancies?
+        }
+
+
+        x_concatenated << x1, x2;
+        x_concatenated.transposeInPlace();
+        VectorXr x_in = Eigen::Map<VectorXr>(x_concatenated.data(), x_concatenated.size());*/
+
+        double noise = sigma_e, sigma_f = 1, l_scale = this->kernel.size();
+        regress.SetHyperParams(l_scale, sigma_f, noise);
+        VectorXr x_in(1), y_out(1);
+        x_in << a;
+        
+        y_out = regress.DoRegression(x_in, kernel);
+        int prediccion = static_cast<int>(y_out(0));
+        
+       
+    }
+
+
+
+}
+
+
 /*
 def Update(self, played_action, total_occupancies, payoff, Capacities_t):
 
@@ -133,7 +207,7 @@ def Update(self, played_action, total_occupancies, payoff, Capacities_t):
 
 
 
-
+/*
 
 #include <vector>
 #include <cmath>
@@ -248,7 +322,7 @@ void Update(int played_action, std::vector<double> total_occupancies, double pay
     delete[] losses;
     delete[] exp_losses;
 }
-
+*/
 
 
 
@@ -325,6 +399,10 @@ int Player::sample_action()
 }
 
 void Player::Update(std::vector<int> played_actions, int player_idx, const NetworkData& network, std::vector<double> Capacities_t, std::vector<std::vector<std::vector<int>>> Strategy_vectors)
+{
+}
+
+void Player::Update(int played_action, std::vector<double> total_occupancies, double payoff, std::vector<double> Capacities_t)
 {
 }
 

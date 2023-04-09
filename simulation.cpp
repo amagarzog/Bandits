@@ -16,7 +16,7 @@ void Simulation::selectParameters(){
 	this->numcontextos = 10;
 	this->polykernel = 4;
 	this->reoptimize = false;
-	this->Algo = "Hedge";
+	this->Algo = "GPMW";
 }
 
 void Simulation::init(){
@@ -96,7 +96,6 @@ void Simulation::init(){
 
 
 	// Kernel
-
 	std::vector<double> sigmas(max_traveltimes.size()); // tamaño = numJugadores --> una desviación típica por cada jugador
 
 	for (int i = 0; i < max_traveltimes.size(); ++i) {
@@ -105,7 +104,7 @@ void Simulation::init(){
 
 	std::vector<std::vector<double>> list_of_param_arrays;
 	std::vector<Eigen::MatrixXd> Kernels (this->numplayers);
-	if(this->Algo == "cGMPW")
+	if(this->Algo == "cGMPW" || this->Algo == "GMPW")
 		Kernels = Optimize_Kernels(this->reoptimize, this->Algo, this->idcontrolledplayers, this->Strategy_vectors, sigmas, this->polykernel, Outcomes, Capacities, Payoffs, list_of_param_arrays);
 	
 

@@ -3,10 +3,13 @@
 
 #include <vector>
 #include <cmath>
+#include <unsupported/Eigen/NonLinearOptimization>
+#include <unsupported/Eigen/NumericalDiff>
 #include <string>
 #include <numeric>
 #include <iostream>
 #include <random>
+#include "gaussian_process_regression.h"
 #include "network.h"
 
 /*
@@ -81,9 +84,14 @@ public:
 };
 
 class Player_GPMW : public Player {
+    
+    typedef Eigen::Matrix<double, Eigen::Dynamic, 1> VectorXr;
+    typedef Eigen::Matrix<double, Eigen::Dynamic, Eigen::Dynamic> MatrixXr;
+
+
 public:
-    Player_GPMW(int K, int T, double min_payoff, double max_payoff, std::vector<std::vector<int>>  my_strategy_vector, double kernel, double sigma_e) {
-        //this->type_ = Playertype::GPMW;
+    Player_GPMW(int K, int T, double min_payoff, double max_payoff, std::vector<std::vector<int>>  my_strategy_vector, Eigen::MatrixXd kernel, double sigma_e) {
+        this->type_ = PlayerType::GPMW;
         this->K_ = K;
         this->T_ = T;
         this->min_payoff_ = min_payoff;
@@ -108,8 +116,8 @@ public:
         this->sigma_e = sigma_e;
         this->strategy_vecs = my_strategy_vector;
 
-        history_payoffs = std::vector<std::vector<double>>();
-        history = std::vector<std::vector<double>>(this->idx_nonzeros.size() * 2);
+        history_payoffs = std::vector<double>();
+        //history = std::vector<std::vector<double>>(T);
         demand = *std::max_element(my_strategy_vector[0].begin(), my_strategy_vector[0].end());
     }
 
@@ -120,19 +128,23 @@ public:
 
 private:
     std::vector<int> idx_nonzeros;
+    std::vector<int> played_actions;
 
     std::vector<double> cum_losses;
     std::vector<double> mean_rewards_est;
     std::vector<double> std_rewards_est;
     std::vector<double> ucb_rewards_est;
-    double kernel;
+    Eigen::MatrixXd kernel;
     double sigma_e;
     std::vector<std::vector<int>> strategy_vecs;
 
-    std::vector<std::vector<double>> history_payoffs;
+    std::vector<double> history_payoffs;
     std::vector<std::vector<double>> history;
     double demand;
 };
+
+
+
 
 
 /*
