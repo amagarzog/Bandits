@@ -9,6 +9,8 @@
 #include <numeric>
 #include <iostream>
 #include <random>
+
+
 #include "gaussian_process_regression.h"
 #include "network.h"
 

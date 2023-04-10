@@ -104,7 +104,7 @@ void Simulation::init(){
 
 	std::vector<std::vector<double>> list_of_param_arrays;
 	std::vector<Eigen::MatrixXd> Kernels (this->numplayers);
-	if(this->Algo == "cGMPW" || this->Algo == "GMPW")
+	if(this->Algo == "cGPMW" || this->Algo == "GPMW")
 		Kernels = Optimize_Kernels(this->reoptimize, this->Algo, this->idcontrolledplayers, this->Strategy_vectors, sigmas, this->polykernel, Outcomes, Capacities, Payoffs, list_of_param_arrays);
 	
 

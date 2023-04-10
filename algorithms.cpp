@@ -116,56 +116,52 @@ void Player_GPMW::Update(int played_action, std::vector<double> total_occupancie
     for (size_t i = 0; i < idx_nonzeros.size(); ++i) {
         other_occupancies[i] = total_occupancies[idx_nonzeros[i]] - strategy_vecs[played_action][idx_nonzeros[i]];
     }
-
-
-
-
     this->played_actions.push_back(played_action);
-    Eigen::MatrixXd x_concatenated(idx_nonzeros.size(), 2); // matriz de idx_nonzeros size filas y dos columnas
-    GaussianProcessRegression<double> regress(this->history.size(), this->history_payoffs.size());
 
-    MatrixXr history_mat(history.size(), history[0].size());
-    MatrixXr history_payoffs_mat(history_payoffs.size(), 1), played_actions_mat(history_payoffs.size(), 1);
-    /*
-    for (int i = 0; i < history.size(); i++) {
-        for (int j = 0; j < history[i].size(); j++) {
-            history_mat(i, j) = history[i][j];
-        }
-    }*/
+    int t = played_actions.size();
 
-    for (int i = 0; i < history_payoffs.size(); i++) {
-        history_payoffs_mat(i, 0) = history_payoffs[i];
-        played_actions_mat(i, 0) = played_actions[i];
+    // Convertir std::vector a Eigen::MatrixXd y Eigen::VectorXd
+    Eigen::MatrixXd X_train(t, 1);
+    Eigen::VectorXd y_train(t);
 
+    for (int i = 0; i < t; ++i) {
+        X_train(i, 0) = played_actions[i];
+        y_train(i) = history_payoffs[i];
     }
 
-    regress.AddTrainingDataBatch(played_actions_mat, history_payoffs_mat);
+    // Crear el modelo de regresión gaussiana
+    GaussianProcessRegression gpr(kernel, sigma_e);
+
+    std::cout << "Kernel dimensions: " << kernel.rows() << " x " << kernel.cols() << std::endl;
+
+
+    // Entrenar el modelo
+    gpr.train(X_train, y_train);
+
+   
+
+
 
     for (int a = 0; a < this->K_; a++) {
-        /*VectorXr x1(this->idx_nonzeros.size());
-        for (int i = 0; i < idx_nonzeros.size(); i++) {
-            x1(i) = strategy_vecs[a][idx_nonzeros[i]];
-        }
-        VectorXr x2(x1.size());
-        for (int i = 0; i < other_occupancies.size(); i++) { //misma size que idx_nonzeros
-            x2(i) = other_occupancies[i] + x1(i); // total occupancies?
-        }
+      
+        Eigen::MatrixXd X_test(1, 1);
+        X_test(0, 0) = a;
 
+        // Realizar predicciones
+        std::pair<Eigen::VectorXd, Eigen::VectorXd> predictions_and_variances = gpr.predict(X_test);
+        Eigen::VectorXd predictions = predictions_and_variances.first;
+        Eigen::VectorXd variances = predictions_and_variances.second;
 
-        x_concatenated << x1, x2;
-        x_concatenated.transposeInPlace();
-        VectorXr x_in = Eigen::Map<VectorXr>(x_concatenated.data(), x_concatenated.size());*/
-
-        double noise = sigma_e, sigma_f = 1, l_scale = this->kernel.size();
-        regress.SetHyperParams(l_scale, sigma_f, noise);
-        VectorXr x_in(1), y_out(1);
-        x_in << a;
+        // Imprimir resultados
+        std::cout << "Predictions:\n" << predictions << std::endl;
+        std::cout << "Variance:\n" << variances << std::endl;
         
-        y_out = regress.DoRegression(x_in, kernel);
-        int prediccion = static_cast<int>(y_out(0));
-        
+
        
     }
+
+
+    int wr = 34;
 
 
 
@@ -392,6 +388,21 @@ void Player_cGPMW::Update_history(int played_action, double payoff, Eigen::Vecto
     history(history.rows() - 1, Eigen::all) = row;
 }
 */
+
+
+/*VectorXr x1(this->idx_nonzeros.size());
+      for (int i = 0; i < idx_nonzeros.size(); i++) {
+          x1(i) = strategy_vecs[a][idx_nonzeros[i]];
+      }
+      VectorXr x2(x1.size());
+      for (int i = 0; i < other_occupancies.size(); i++) { //misma size que idx_nonzeros
+          x2(i) = other_occupancies[i] + x1(i); // total occupancies?
+      }
+
+
+      x_concatenated << x1, x2;
+      x_concatenated.transposeInPlace();
+      VectorXr x_in = Eigen::Map<VectorXr>(x_concatenated.data(), x_concatenated.size());*/
 
 int Player::sample_action()
 {

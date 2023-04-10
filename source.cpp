@@ -10,6 +10,7 @@ int main(...)
 	Simulation simulation (network);
 	simulation.init();
 	simulation.run();
+	
 
 
 	return 0;

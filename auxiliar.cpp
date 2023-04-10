@@ -90,6 +90,8 @@ void GameData::Simulate_Game(int run, std::vector<Player*>& Players, int T, cons
                 std::normal_distribution<double> dist(mean, std_dev);  // distribución normal
                 double noise = dist(gen);  // generar una muestra aleatoria. dist es un objeto de la clase std::normal_distribution que representa la distribución normal con los parámetros especificados. 
                 double noisy_loss = Incurred_losses[t][i] + noise;
+                if (t > 10)
+                    int a = 234;
                 Players[i]->Update(this->Played_actions[t][i], Total_occupancies.back(), -noisy_loss, Capacities_t); 
                 /*Se pasan las elecciones de todos los jugadores (retroalimentación baja), la ocupación de las carretereas en la última ronda, errepentimiento ruidoso, y las capacidades de cada carretera en 
                     el momento t (en cada momento t hay un contexto distinto y por tanto capacidades distintas)*/
@@ -198,6 +200,9 @@ std::vector<Eigen::MatrixXd> Optimize_Kernels(bool reoptimize, std::string Algo,
                 kernel_2 = poly_kernel(dim, poly_degree, variances(1), scales(1), biases(1), active_dimsdos);
 
                 Kernels[ind] = kernel_1.cwiseProduct(kernel_2);
+
+                std::cout << "Kernel dimensions: " << Kernels[ind].rows() << " x " << Kernels[ind].cols() << std::endl;
+
 
             }
             else { // se hace en la ejecución del juego
