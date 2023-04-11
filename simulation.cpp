@@ -12,7 +12,7 @@ Simulation::Simulation(const NetworkData& network) : network(network) {
 void Simulation::selectParameters(){
 	/*Parámetros que se establecen para controlar el juego->por defecto toman estos valores*/
 	this->controlledplayers = 1;
-	this->rondas = 100;
+	this->rondas = 25;
 	this->numcontextos = 10;
 	this->polykernel = 4;
 	this->reoptimize = false;
@@ -99,7 +99,7 @@ void Simulation::init(){
 	std::vector<double> sigmas(max_traveltimes.size()); // tamaño = numJugadores --> una desviación típica por cada jugador
 
 	for (int i = 0; i < max_traveltimes.size(); ++i) {
-		sigmas[i] = 0.001 * (max_traveltimes[i] - min_traveltimes[i]);
+		sigmas[i] = 0.001 * (max_traveltimes[i] - min_traveltimes[i]); // cambiado para ajustar menor valor de sigma
 	}
 
 	std::vector<std::vector<double>> list_of_param_arrays;

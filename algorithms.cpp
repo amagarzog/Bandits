@@ -159,7 +159,8 @@ void Player_GPMW::Update(int ronda, int played_action, std::vector<double> total
         }
 
     }
-    int noise = sigma_e * sigma_e;
+    int noise2 = sigma_e * sigma_e;
+    int noise = sigma_e;
     // Crear el modelo de regresión gaussiana
     GaussianProcessRegression gpr(kernel, noise);
     std::cout << kernel.size() << "X historia pasada::" << std::endl << X_train << std::endl << std::endl;
@@ -169,7 +170,7 @@ void Player_GPMW::Update(int ronda, int played_action, std::vector<double> total
     // Entrenar el modelo
     gpr.train(X_train, y_train);
 
-
+    std::vector<int> payoffs(K_);
     for (int a = 0; a < this->K_; a++) {
         Eigen::MatrixXd x1(1, idx_nonzeros.size());
         for (int i = 0; i < idx_nonzeros.size(); ++i) {
@@ -196,16 +197,14 @@ void Player_GPMW::Update(int ronda, int played_action, std::vector<double> total
 
         // Imprimir resultados
         std::cout << "Brazo " << a << " Predictions:" << predictions << " Variance:" << variances << std::endl;
-
-
-
-
-
         
-
-       
+        this->ucb_rewards_est[a] = predictions(0) + beta_t * variances(0);
+        this->mean_rewards_est[a] = predictions(0);
+        this->std_rewards_est[a] = variances(0);
+        payoffs.push_back(this->ucb_rewards_est[a]);
     }
-    int resultados = 10;
+
+    
 
     int wr = 34;
 

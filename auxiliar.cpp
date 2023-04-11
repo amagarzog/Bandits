@@ -191,7 +191,7 @@ std::vector<Eigen::MatrixXd> Optimize_Kernels(bool reoptimize, std::string Algo,
                 Eigen::MatrixXd X = Eigen::MatrixXd::Identity(dim, dim); // Se usa la matriz identidad
 
                 Eigen::MatrixXd kernel_1 = Eigen::MatrixXd::Zero(dim, dim);
-
+                // Kernels polinomicos
                 for (int i = 0; i < dim; ++i) {
                     for (int j = 0; j < dim; ++j) {
                         double dot_product = X.row(i).dot(X.row(j));

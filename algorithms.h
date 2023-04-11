@@ -1,6 +1,7 @@
 #ifndef alogrithms_h
 #define algorithms_h
 
+
 #include <vector>
 #include <cmath>
 #include <unsupported/Eigen/NonLinearOptimization>
@@ -11,8 +12,10 @@
 #include <random>
 
 
-#include "gaussian_process_regression.h"
+//#include "gaussian_process_regression.h"
 #include "network.h"
+#include "gaussian_regression.hxx"
+
 
 /*
 #include <GPy/GPy.hpp>

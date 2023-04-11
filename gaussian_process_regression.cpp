@@ -1,8 +1,9 @@
 #include "gaussian_process_regression.h"
 #include <Eigen/Cholesky>
+#include <iostream>
 
 GaussianProcessRegression::GaussianProcessRegression(const Eigen::MatrixXd& kernel, double sigma_squared)
-    : kernel_(kernel), sigma_squared_(sigma_squared) {
+    : kernel_(kernel), sigma_squared_(sigma_squared * 1e-6) {
 }
 
 void GaussianProcessRegression::train(const Eigen::MatrixXd& X_train, const Eigen::VectorXd& y_train) {
@@ -44,6 +45,7 @@ std::pair<Eigen::VectorXd, Eigen::VectorXd> GaussianProcessRegression::predict(c
 
 
     Eigen::VectorXd mean = K_s * K_inv_ * y_train_;
+    std::cout << K_s << K_inv_ << y_train_;
     Eigen::MatrixXd covariance = K_ss - K_s * K_inv_ * K_s.transpose();
 
     Eigen::VectorXd variance = covariance.diagonal();
