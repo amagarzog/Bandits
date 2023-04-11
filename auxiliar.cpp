@@ -83,16 +83,15 @@ void GameData::Simulate_Game(int run, std::vector<Player*>& Players, int T, cons
                     /*Se pasan las elecciones de todos los jugadores (retroalimentación alta), datos de la red, las capacidades de cada carretera en 
                     el momento t (en cada momento t hay un contexto distinto y por tanto capacidades distintas), y las estrategias de todos los jugadores */
             }
-            if (Players[i]->getType() == PlayerType::GPMW) {
+            if (Players[i]->getType() == PlayerType::GPMW&& t>50) {
                 double mean = 0.0;  // media
                 double std_dev = sigmas[i];  // desviación estándar
                 std::mt19937 gen(1234);  // semilla del generador de números aleatorios
                 std::normal_distribution<double> dist(mean, std_dev);  // distribución normal
                 double noise = dist(gen);  // generar una muestra aleatoria. dist es un objeto de la clase std::normal_distribution que representa la distribución normal con los parámetros especificados. 
                 double noisy_loss = Incurred_losses[t][i] + noise;
-                if (t > 10)
-                    int a = 234;
-                Players[i]->Update(this->Played_actions[t][i], Total_occupancies.back(), -noisy_loss, Capacities_t); 
+                std::cout << "Ronda: " << t << std::endl;
+                Players[i]->Update(t, this->Played_actions[t][i], Total_occupancies.back(), -noisy_loss, Capacities_t); 
                 /*Se pasan las elecciones de todos los jugadores (retroalimentación baja), la ocupación de las carretereas en la última ronda, errepentimiento ruidoso, y las capacidades de cada carretera en 
                     el momento t (en cada momento t hay un contexto distinto y por tanto capacidades distintas)*/
             }
@@ -272,21 +271,6 @@ Eigen::MatrixXd poly_kernel(int dim, int degree, double variance, double scale, 
     }
     return kernel;
 }*/
-
-Eigen::MatrixXd poly_kernel(int dim, double variance, double scale, double bias, int degree, const Eigen::VectorXi& active_dims) {
-    int num_active_dims = active_dims.size();
-    Eigen::MatrixXd kernel = Eigen::MatrixXd::Zero(dim, dim);
-
-    /*double base_value = variance * scale + bias * bias;
-
-    for (int i = 0; i < num_active_dims; ++i) {
-        int d = active_dims(i);
-        if (d < dim && d >= 0) {
-            kernel(d, d) = std::pow(base_value, static_cast<double>(degree));
-        }
-    }*/
-    return kernel;
-}
 
 
 /*#include <vector>

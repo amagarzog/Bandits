@@ -99,16 +99,20 @@ int Player_GPMW::sample_action() {
 }
 
 
-void Player_GPMW::Update(int played_action, std::vector<double> total_occupancies, double payoff, std::vector<double> Capacities_t)
+void Player_GPMW::Update(int ronda, int played_action, std::vector<double> total_occupancies, double payoff, std::vector<double> Capacities_t)
 {
-    this->history_payoffs.push_back(payoff); 
+    this->history_payoffs[ronda] = payoff; 
     std::vector<double> new_history;
     for (int i = 0; i < this->idx_nonzeros.size(); ++i) {
         int idx = this->idx_nonzeros[i];
         new_history.push_back(this->strategy_vecs[played_action][idx]);
         new_history.push_back(total_occupancies[idx]);
     }
-    this->history.push_back(new_history);
+    // en new history se ponen algunos ceros de strategyvecs porque estas cogiendo todas las carreteras qeu necesita el jugadore para los 5 brazos
+    // con idx_nonzeros, pero al seleccionar un brazo jugado, habra estrategias que estaran usando la carretara mientras que el brazo jugado no, y como
+    // se coge del brazo jugado, se mandaria un 0. Por ejemplo: del brazo 2 se usa la carretera 14 para mandar 3, pero del brazo 1 no, si se juega el brazo uno,
+    // idx_nonzeros pasara por la carretera 14 y strategyvecs[1][14] = 0 porque lo usa el brazo 2
+    this->history[ronda] =new_history;
 
     int beta_t = 0.5;
 
@@ -119,72 +123,68 @@ void Player_GPMW::Update(int played_action, std::vector<double> total_occupancie
     this->played_actions.push_back(played_action);
 
     int t = played_actions.size();
-    Eigen::MatrixXd X_train(this->history.size(), 2 * idx_nonzeros.size());
-    for (int i = 0; i < this->history.size(); ++i) {
+    Eigen::MatrixXd X_train(ronda, 2 * idx_nonzeros.size());
+    for (int i = 0; i < ronda; ++i) {
         for (int j = 0; j < 2 * idx_nonzeros.size(); ++j) {
             X_train(i, j) = this->history[i][j];
         }
     }
 
-    Eigen::VectorXd y_train(this->history_payoffs.size());
-    for (int i = 0; i < this->history_payoffs.size(); ++i) {
+    Eigen::VectorXd y_train(ronda);
+    for (int i = 0; i < ronda; ++i) {
         y_train(i) = this->history_payoffs[i];
     }
-
-
-
    
     int noise = sigma_e * sigma_e;
     // Crear el modelo de regresión gaussiana
-    GaussianProcessRegression gpr(kernel, sigma_e);
-
-    std::cout << "Kernel dimensions: " << kernel.rows() << " x " << kernel.cols() << "  " << kernel  << std::endl;
-
+    GaussianProcessRegression gpr(kernel, noise);
+    std::cout << X_train << std::endl << std::endl;
+    std::cout << y_train << std::endl << std::endl;
+    /*std::cout << kernel << std::endl; */
 
     // Entrenar el modelo
     gpr.train(X_train, y_train);
 
-   
-
-
 
     for (int a = 0; a < this->K_; a++) {
+        Eigen::MatrixXd x1(1, idx_nonzeros.size());
+        for (int i = 0; i < idx_nonzeros.size(); ++i) {
+            x1(0, i) = strategy_vecs[a][idx_nonzeros[i]];
+        }
+        
 
-        /*Eigen::MatrixXi x1(1, this->idx_nonzeros.size());
-        for (int i = 0; i < this->idx_nonzeros.size(); ++i) {
-            x1.col(i) = strategy_vecs[a][idx_nonzeros[i]];
+        Eigen::MatrixXd x2(1, idx_nonzeros.size());
+        for (int i = 0; i < idx_nonzeros.size(); ++i) {
+            x2(0, i) = other_occupancies[i] + x1(0, i);
         }
 
-        Eigen::MatrixXi x2(1, this->idx_nonzeros.size());
-        for (int i = 0; i < this->idx_nonzeros.size(); ++i) {
-            x2.col(i) = other_occupancies.col(i) + x1.col(i);
-        }
-        Eigen::MatrixXd X_test(1, 2 * this->idx_nonzeros.size());
-        X_test << x1.cast<double>(), x2.cast<double>();
+        Eigen::MatrixXd X_test(1, 2 * idx_nonzeros.size());
+        X_test << x1, x2;
 
+        std::cout << X_test << std::endl;
 
-        // Concatenar x1 y x2 horizontalmente
+        // Hacer predicciones
+        //std::cout << X_test.cols() << " " << kernel.cols();
 
-
-
-
-        // Realizar predicciones
-        /*std::pair<Eigen::VectorXd, Eigen::VectorXd> predictions_and_variances = gpr.predict(X_test);
+        std::pair<Eigen::VectorXd, Eigen::VectorXd> predictions_and_variances = gpr.predict(X_test);
         Eigen::VectorXd predictions = predictions_and_variances.first;
         Eigen::VectorXd variances = predictions_and_variances.second;
 
         // Imprimir resultados
         std::cout << "Predictions:\n" << predictions << std::endl;
-        std::cout << "Variance:\n" << variances << std::endl;*/
+        std::cout << "Variance:\n" << variances << std::endl;
+
+
+
+
+
         
 
        
     }
-
+    int resultados = 10;
 
     int wr = 34;
-
-
 
 }
 
@@ -434,7 +434,7 @@ void Player::Update(std::vector<int> played_actions, int player_idx, const Netwo
 {
 }
 
-void Player::Update(int played_action, std::vector<double> total_occupancies, double payoff, std::vector<double> Capacities_t)
+void Player::Update(int ronda, int played_action, std::vector<double> total_occupancies, double payoff, std::vector<double> Capacities_t)
 {
 }
 

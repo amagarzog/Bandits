@@ -53,7 +53,7 @@ public:
     //Hedge
     virtual void Update(std::vector<int> played_actions, int player_idx, const NetworkData& network, std::vector<double> Capacities_t, std::vector<std::vector<std::vector<int>>> Strategy_vectors);
     //GPMW
-    virtual void Update(int played_action, std::vector<double> total_occupancies, double payoff, std::vector<double> Capacities_t);
+    virtual void Update(int ronda, int played_action, std::vector<double> total_occupancies, double payoff, std::vector<double> Capacities_t);
     //cGPMW
     //virtual void Update(std::vector<int> played_actions, int player_idx, const NetworkData& network, std::vector<double> Capacities_t, std::vector<std::vector<std::vector<int>>> Strategy_vectors);
 
@@ -118,14 +118,14 @@ public:
         this->sigma_e = sigma_e;
         this->strategy_vecs = my_strategy_vector;
 
-        history_payoffs = std::vector<double>();
-        //history = std::vector<std::vector<double>>(T);
+        history_payoffs = std::vector<double>(T);
+        history = std::vector<std::vector<double>>(T);
         demand = *std::max_element(my_strategy_vector[0].begin(), my_strategy_vector[0].end());
     }
 
     std::vector<double> mixed_strategy();
     int sample_action() override;
-    void Update(int played_action, std::vector<double> total_occupancies, double payoff, std::vector<double> Capacities_t) override;
+    void Update(int ronda, int played_action, std::vector<double> total_occupancies, double payoff, std::vector<double> Capacities_t) override;
 
 
 private:

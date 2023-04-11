@@ -44,7 +44,4 @@ std::vector<Eigen::MatrixXd> Optimize_Kernels(bool reoptimize, std::string Algo,
 // Cargar parametros
 std::vector<std::vector<double>> loadParamsFromFile(std::string fileName);
 
-// Calcular Kernels
-Eigen::MatrixXd poly_kernel(int dim, int degree, double variance, double scale, double bias, const Eigen::VectorXi& active_dims);
-
 #endif
