@@ -119,20 +119,26 @@ void Player_GPMW::Update(int played_action, std::vector<double> total_occupancie
     this->played_actions.push_back(played_action);
 
     int t = played_actions.size();
-
-    // Convertir std::vector a Eigen::MatrixXd y Eigen::VectorXd
-    Eigen::MatrixXd X_train(t, 1);
-    Eigen::VectorXd y_train(t);
-
-    for (int i = 0; i < t; ++i) {
-        X_train(i, 0) = played_actions[i];
-        y_train(i) = history_payoffs[i];
+    Eigen::MatrixXd X_train(this->history.size(), 2 * idx_nonzeros.size());
+    for (int i = 0; i < this->history.size(); ++i) {
+        for (int j = 0; j < 2 * idx_nonzeros.size(); ++j) {
+            X_train(i, j) = this->history[i][j];
+        }
     }
 
+    Eigen::VectorXd y_train(this->history_payoffs.size());
+    for (int i = 0; i < this->history_payoffs.size(); ++i) {
+        y_train(i) = this->history_payoffs[i];
+    }
+
+
+
+   
+    int noise = sigma_e * sigma_e;
     // Crear el modelo de regresión gaussiana
     GaussianProcessRegression gpr(kernel, sigma_e);
 
-    std::cout << "Kernel dimensions: " << kernel.rows() << " x " << kernel.cols() << std::endl;
+    std::cout << "Kernel dimensions: " << kernel.rows() << " x " << kernel.cols() << "  " << kernel  << std::endl;
 
 
     // Entrenar el modelo
@@ -143,18 +149,33 @@ void Player_GPMW::Update(int played_action, std::vector<double> total_occupancie
 
 
     for (int a = 0; a < this->K_; a++) {
-      
-        Eigen::MatrixXd X_test(1, 1);
-        X_test(0, 0) = a;
+
+        /*Eigen::MatrixXi x1(1, this->idx_nonzeros.size());
+        for (int i = 0; i < this->idx_nonzeros.size(); ++i) {
+            x1.col(i) = strategy_vecs[a][idx_nonzeros[i]];
+        }
+
+        Eigen::MatrixXi x2(1, this->idx_nonzeros.size());
+        for (int i = 0; i < this->idx_nonzeros.size(); ++i) {
+            x2.col(i) = other_occupancies.col(i) + x1.col(i);
+        }
+        Eigen::MatrixXd X_test(1, 2 * this->idx_nonzeros.size());
+        X_test << x1.cast<double>(), x2.cast<double>();
+
+
+        // Concatenar x1 y x2 horizontalmente
+
+
+
 
         // Realizar predicciones
-        std::pair<Eigen::VectorXd, Eigen::VectorXd> predictions_and_variances = gpr.predict(X_test);
+        /*std::pair<Eigen::VectorXd, Eigen::VectorXd> predictions_and_variances = gpr.predict(X_test);
         Eigen::VectorXd predictions = predictions_and_variances.first;
         Eigen::VectorXd variances = predictions_and_variances.second;
 
         // Imprimir resultados
         std::cout << "Predictions:\n" << predictions << std::endl;
-        std::cout << "Variance:\n" << variances << std::endl;
+        std::cout << "Variance:\n" << variances << std::endl;*/
         
 
        

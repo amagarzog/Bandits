@@ -189,19 +189,26 @@ std::vector<Eigen::MatrixXd> Optimize_Kernels(bool reoptimize, std::string Algo,
                     active_dims(1, i) = i + dim;
                 }
 
+                Eigen::MatrixXd X = Eigen::MatrixXd::Identity(dim, dim); // Se usa la matriz identidad
 
+                Eigen::MatrixXd kernel_1 = Eigen::MatrixXd::Zero(dim, dim);
 
-                Eigen::MatrixXd kernel_1(dim, dim);
-                Eigen::VectorXi active_dimsuno = active_dims.row(0).cast<int>().transpose();
-                kernel_1 = poly_kernel(dim, 1, variances(0), scales(0), biases(0), active_dimsuno);
-
-                Eigen::MatrixXd kernel_2(dim, dim);
-                Eigen::VectorXi active_dimsdos = active_dims.row(1).cast<int>().transpose();
-                kernel_2 = poly_kernel(dim, poly_degree, variances(1), scales(1), biases(1), active_dimsdos);
+                for (int i = 0; i < dim; ++i) {
+                    for (int j = 0; j < dim; ++j) {
+                        double dot_product = X.row(i).dot(X.row(j));
+                        kernel_1(i, j) = std::pow(loaded_params[1] * dot_product + loaded_params[2], 1.0);
+                    }
+                }
+                Eigen::MatrixXd kernel_2 = Eigen::MatrixXd::Zero(dim, dim);
+                for (int i = 0; i < dim; ++i) {
+                    for (int j = 0; j < dim; ++j) {
+                        double dot_product = X.row(i).dot(X.row(j));
+                        kernel_2(i, j) = std::pow(variances(1) * dot_product + biases(1), static_cast<double>(poly_degree));
+                    }
+                }
 
                 Kernels[ind] = kernel_1.cwiseProduct(kernel_2);
-
-                std::cout << "Kernel dimensions: " << Kernels[ind].rows() << " x " << Kernels[ind].cols() << std::endl;
+                //std::cout << Kernels[ind] << Kernels[ind].rows() << " x " << Kernels[ind].cols() << std::endl;
 
 
             }
@@ -242,6 +249,8 @@ std::vector<std::vector<double>> loadParamsFromFile(std::string fileName)
 
 
 
+/*
+
 Eigen::MatrixXd poly_kernel(int dim, int degree, double variance, double scale, double bias, const Eigen::VectorXi& active_dims) {
     int num_active_dims = active_dims.size();
     Eigen::MatrixXd kernel = Eigen::MatrixXd::Zero(dim, dim);
@@ -262,10 +271,22 @@ Eigen::MatrixXd poly_kernel(int dim, int degree, double variance, double scale, 
         }
     }
     return kernel;
+}*/
+
+Eigen::MatrixXd poly_kernel(int dim, double variance, double scale, double bias, int degree, const Eigen::VectorXi& active_dims) {
+    int num_active_dims = active_dims.size();
+    Eigen::MatrixXd kernel = Eigen::MatrixXd::Zero(dim, dim);
+
+    /*double base_value = variance * scale + bias * bias;
+
+    for (int i = 0; i < num_active_dims; ++i) {
+        int d = active_dims(i);
+        if (d < dim && d >= 0) {
+            kernel(d, d) = std::pow(base_value, static_cast<double>(degree));
+        }
+    }*/
+    return kernel;
 }
-
-
-
 
 
 /*#include <vector>
