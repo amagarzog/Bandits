@@ -11,7 +11,7 @@ Simulation::Simulation(const NetworkData& network) : network(network) {
 
 void Simulation::selectParameters(){
 	/*Parámetros que se establecen para controlar el juego->por defecto toman estos valores*/
-	this->controlledplayers = 20;
+	this->controlledplayers = 1;
 	this->rondas = 100;
 	this->numcontextos = 10;
 	this->polykernel = 4;

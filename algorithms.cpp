@@ -101,6 +101,8 @@ int Player_GPMW::sample_action() {
 
 void Player_GPMW::Update(int ronda, int played_action, std::vector<double> total_occupancies, double payoff, std::vector<double> Capacities_t)
 {
+
+    //std::cout << "kernel tamaño " << kernel.size() << " " << this->idx_nonzeros.size();
     this->history_payoffs[ronda] = payoff; 
     std::vector<double> new_history;
     for (int i = 0; i < this->idx_nonzeros.size(); ++i) {
@@ -122,24 +124,46 @@ void Player_GPMW::Update(int ronda, int played_action, std::vector<double> total
     }
     this->played_actions.push_back(played_action);
 
-    int t = played_actions.size();
-    Eigen::MatrixXd X_train(ronda, 2 * idx_nonzeros.size());
-    for (int i = 0; i < ronda; ++i) {
-        for (int j = 0; j < 2 * idx_nonzeros.size(); ++j) {
-            X_train(i, j) = this->history[i][j];
+    Eigen::MatrixXd X_train;
+    Eigen::VectorXd y_train;
+    if ((ronda) <= this->idx_nonzeros.size()) {
+        X_train.resize(ronda, 2 * idx_nonzeros.size());
+        for (int i = 0; i < ronda; ++i) {
+            for (int j = 0; j < 2 * idx_nonzeros.size(); ++j) {
+                X_train(i, j) = this->history[i][j];
+            }
+        }
+
+        y_train.resize(ronda);
+        for (int i = 0; i < ronda; ++i) {
+            y_train(i) = this->history_payoffs[i];
         }
     }
+    else { // se cogen kernel.size()=this->idx_nonzeros.size() datos aleatorios para que coincidan las matrices
+        X_train.resize(this->idx_nonzeros.size(), 2 * idx_nonzeros.size());
+        y_train.resize(this->idx_nonzeros.size());
+        std::vector<int> indices(ronda);
+        std::iota(indices.begin(), indices.end(), 0);
+        std::random_device rd;
+        std::mt19937 g(rd());
+        std::shuffle(indices.begin(), indices.end(), g);
 
-    Eigen::VectorXd y_train(ronda);
-    for (int i = 0; i < ronda; ++i) {
-        y_train(i) = this->history_payoffs[i];
+        // Selecciona los primeros kernel.size() índices
+        std::vector<int> kernel_indices(indices.begin(), indices.begin() + this->idx_nonzeros.size());
+        for (int i = 0; i < this->idx_nonzeros.size(); ++i) {
+            int idx = kernel_indices[i];
+            for (int j = 0; j < 2 * idx_nonzeros.size(); ++j) {
+                X_train(i, j) = this->history[idx][j];
+            }
+            y_train(i) = this->history_payoffs[idx];
+        }
+
     }
-   
     int noise = sigma_e * sigma_e;
     // Crear el modelo de regresión gaussiana
     GaussianProcessRegression gpr(kernel, noise);
-    std::cout << X_train << std::endl << std::endl;
-    std::cout << y_train << std::endl << std::endl;
+    std::cout << kernel.size() << "X historia pasada::" << std::endl << X_train << std::endl << std::endl;
+    std::cout << "Y Payoff pasada::" << std::endl << y_train << std::endl << std::endl;
     /*std::cout << kernel << std::endl; */
 
     // Entrenar el modelo
@@ -161,7 +185,7 @@ void Player_GPMW::Update(int ronda, int played_action, std::vector<double> total
         Eigen::MatrixXd X_test(1, 2 * idx_nonzeros.size());
         X_test << x1, x2;
 
-        std::cout << X_test << std::endl;
+        std::cout << "X tests" << X_test << std::endl;
 
         // Hacer predicciones
         //std::cout << X_test.cols() << " " << kernel.cols();
@@ -171,8 +195,7 @@ void Player_GPMW::Update(int ronda, int played_action, std::vector<double> total
         Eigen::VectorXd variances = predictions_and_variances.second;
 
         // Imprimir resultados
-        std::cout << "Predictions:\n" << predictions << std::endl;
-        std::cout << "Variance:\n" << variances << std::endl;
+        std::cout << "Brazo " << a << " Predictions:" << predictions << " Variance:" << variances << std::endl;
 
 
 
@@ -223,123 +246,6 @@ def Update(self, played_action, total_occupancies, payoff, Capacities_t):
 */
 
 
-
-/*
-
-#include <vector>
-#include <cmath>
-#include <Eigen/Dense>
-
-
-void Update(int played_action, std::vector<double> total_occupancies, double payoff, std::vector<double> Capacities_t) {
-    double beta_t = 0.5;
-    int K = sizeof(self.strategy_vecs) / sizeof(self.strategy_vecs[0]);
-
-    // Append new payoff to history_payoffs
-    double** new_history_payoffs = new double*[self.history_payoffs_row + 1];
-    for(int i=0; i<self.history_payoffs_row; i++) {
-        new_history_payoffs[i] = new double[self.K];
-        for(int j=0; j<self.K; j++) {
-            new_history_payoffs[i][j] = self.history_payoffs[i][j];
-        }
-    }
-    new_history_payoffs[self.history_payoffs_row] = payoff;
-    self.history_payoffs = new_history_payoffs;
-    self.history_payoffs_row += 1;
-
-    // Append new row to history
-    double** new_history = new double*[self.history_row + 1];
-    for(int i=0; i<self.history_row; i++) {
-        new_history[i] = new double[2*self.idx_nonzeros];
-        for(int j=0; j<2*self.idx_nonzeros; j++) {
-            new_history[i][j] = self.history[i][j];
-        }
-    }
-    double* temp = new double[2*self.idx_nonzeros];
-    for(int i=0; i<self.idx_nonzeros; i++) {
-        temp[i] = self.strategy_vecs[played_action][self.idx_nonzeros][i];
-        temp[self.idx_nonzeros+i] = total_occupancies[self.idx_nonzeros][i];
-    }
-    new_history[self.history_row] = temp;
-    self.history = new_history;
-    self.history_row += 1;
-
-    // Create GP Regression model and fix Gaussian noise
-    auto X = Eigen::Map<Eigen::MatrixXd>(self.history[0], self.history_row, 2*self.idx_nonzeros);
-    auto y = Eigen::Map<Eigen::MatrixXd>(self.history_payoffs[0], self.history_payoffs_row, self.K);
-    auto kernel = GPy::RBF(X.cols());
-    auto m = GPy::GPRegression(X, y, kernel);
-    m.Gaussian_noise.fix(std::pow(self.sigma_e, 2));
-
-    // Compute UCB and mean/std estimates for each action
-    double** other_occupancies = new double*[self.idx_nonzeros];
-    for(int i=0; i<self.idx_nonzeros; i++) {
-        other_occupancies[i] = new double[self.K];
-        for(int j=0; j<self.K; j++) {
-            other_occupancies[i][j] = total_occupancies[self.idx_nonzeros][j] - self.strategy_vecs[played_action][self.idx_nonzeros][j];
-        }
-    }
-    double* mu = new double[self.K];
-    double* var = new double[self.K];
-    double* sigma = new double[self.K];
-    for(int a1=0; a1<K; a1++) {
-        double* x1 = new double[self.idx_nonzeros];
-        for(int i=0; i<self.idx_nonzeros; i++) {
-            x1[i] = self.strategy_vecs[a1][self.idx_nonzeros][i];
-        }
-        double* x2 = new double[self.K];
-        for(int i=0; i<self.K; i++) {
-            x2[i] = other_occupancies[i][j] + x1[j];
-        }
-        auto predict_input = Eigen::Map<Eigen::VectorXd>(std::vector<double>(x1, x1 + self.idx_nonzeros).data(), self.idx_nonzeros + self.K);
-        predict_input.segment(self.idx_nonzeros, self.K) = Eigen::MapEigen::VectorXd(x2, self.K);
-        Eigen::VectorXd mu, var;
-        std::tie(mu, var) = m.predict(predict_input);
-
-        double sigma = std::sqrt(std::max(var(0), 1e-6));
-        self.ucb_rewards_est[a1] = mu(0) + beta_t * sigma;
-        self.mean_rewards_est[a1] = mu(0);
-        self.std_rewards_est[a1] = sigma;
-
-        delete[] x1;
-        delete[] x2;
-    }
-
-    double* payoffs = new double[K];
-    for(int a1=0; a1<K; a1++) {
-        payoffs[a1] = self.ucb_rewards_est[a1];
-        payoffs[a1] = std::max(payoffs[a1], self.min_payoff);
-        payoffs[a1] = std::min(payoffs[a1], self.max_payoff);
-    }
-    double* payoffs_scaled = new double[K];
-    for(int a1=0; a1<K; a1++) {
-        payoffs_scaled[a1] = (payoffs[a1] - self.min_payoff) / (self.max_payoff - self.min_payoff);
-    }
-    double* losses = new double[K];
-    for(int a1=0; a1<K; a1++) {
-        losses[a1] = 1.0 - payoffs_scaled[a1];
-        self.cum_losses[a1] += losses[a1];
-    }
-    double* exp_losses = new double[K];
-    for(int a1=0; a1<K; a1++) {
-        exp_losses[a1] = std::exp(-gamma_t * self.cum_losses[a1]);
-    }
-
-    double sum_exp_losses = 0.0;
-    for(int a1=0; a1<K; a1++) {
-        sum_exp_losses += exp_losses[a1];
-    }
-
-    for(int a1=0; a1<K; a1++) {
-        self.weights[a1] = exp_losses[a1] / sum_exp_losses;
-    }
-
-    delete[] payoffs;
-    delete[] payoffs_scaled;
-    delete[] losses;
-    delete[] exp_losses;
-}
-*/
 
 
 

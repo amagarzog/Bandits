@@ -83,7 +83,7 @@ void GameData::Simulate_Game(int run, std::vector<Player*>& Players, int T, cons
                     /*Se pasan las elecciones de todos los jugadores (retroalimentación alta), datos de la red, las capacidades de cada carretera en 
                     el momento t (en cada momento t hay un contexto distinto y por tanto capacidades distintas), y las estrategias de todos los jugadores */
             }
-            if (Players[i]->getType() == PlayerType::GPMW&& t>50) {
+            if (Players[i]->getType() == PlayerType::GPMW&& true) {
                 double mean = 0.0;  // media
                 double std_dev = sigmas[i];  // desviación estándar
                 std::mt19937 gen(1234);  // semilla del generador de números aleatorios
