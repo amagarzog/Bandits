@@ -30,11 +30,18 @@ std::pair<Eigen::VectorXd, Eigen::VectorXd> GaussianProcessRegression::predict(c
         }
     }
 
-    for (int i = 0; i < n_test; ++i) {
-        for (int j = 0; j < n_test; ++j) {
-            K_ss(i, j) = kernel_(i + n_train, j + n_train);
+
+    if (kernel_.rows() == n_train && kernel_.cols() == n_train) {
+        K_ss(0, 0) = kernel_(n_train-1, n_train-1);
+    }
+    else {
+        for (int i = 0; i < n_test; ++i) {
+            for (int j = 0; j < n_test; ++j) {
+                K_ss(i, j) = kernel_(i + n_train, j + n_train);
+            }
         }
     }
+
 
     Eigen::VectorXd mean = K_s * K_inv_ * y_train_;
     Eigen::MatrixXd covariance = K_ss - K_s * K_inv_ * K_s.transpose();
