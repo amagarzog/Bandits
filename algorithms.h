@@ -13,9 +13,22 @@
 
 
 //#include "gaussian_process_regression.h"
+
+#include <dlib/matrix.h>
+#include <dlib/statistics.h>
+#include <dlib/svm_threaded.h>
+#include <dlib/svm.h>
+#include <dlib/optimization.h>
+
+
+/*
+#include <mlpack/core.hpp>
+#include <mlpack/methods/linear_regression/linear_regression.hpp>
+#include <armadillo>
+*/
+
 #include "network.h"
 #include "gaussian_regression.hxx"
-
 
 /*
 #include <GPy/GPy.hpp>
@@ -33,6 +46,15 @@ using namespace Eigen;*/
 IDEA: herencia player padre del resto de jugadores para tratar todos los jugadores en auxiliar.
 plus: se podría crear un .h y un .cpp para player y otro para cada tipo.
 */
+
+typedef dlib::matrix<double, 0, 1> sample_type;
+typedef dlib::radial_basis_kernel<sample_type> kernel_type;
+std::vector<sample_type> eigen_to_dlib_matrix(const Eigen::MatrixXd& eigen_matrix);
+std::vector<double> eigen_to_double_vector(const Eigen::VectorXd& eigen_vector);
+void print_dlib_X_train(const std::vector<sample_type>& dlib_X_train, int brazo,  std::vector<double> payoffs);
+
+std::vector<sample_type> history_to_dlib_samples(const std::vector<std::vector<double>>& history);
+std::vector<double> history_payoffs_to_dlib_labels(const std::vector<double>& history_payoffs);
 
 enum class PlayerType {
     cGPMW,
@@ -121,8 +143,8 @@ public:
         this->sigma_e = sigma_e;
         this->strategy_vecs = my_strategy_vector;
 
-        history_payoffs = std::vector<double>(T);
-        history = std::vector<std::vector<double>>(T);
+        //history_payoffs = std::vector<double>(T);
+        //history = std::vector<std::vector<double>>(T);
         demand = *std::max_element(my_strategy_vector[0].begin(), my_strategy_vector[0].end());
     }
 
@@ -147,7 +169,6 @@ private:
     std::vector<std::vector<double>> history;
     double demand;
 };
-
 
 
 

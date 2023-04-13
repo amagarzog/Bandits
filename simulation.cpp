@@ -13,7 +13,7 @@ void Simulation::selectParameters(){
 	/*Parámetros que se establecen para controlar el juego->por defecto toman estos valores*/
 	this->controlledplayers = 1;
 	this->rondas = 25;
-	this->numcontextos = 10;
+	this->numcontextos = 5;
 	this->polykernel = 4;
 	this->reoptimize = false;
 	this->Algo = "GPMW";

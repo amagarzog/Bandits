@@ -1,7 +1,6 @@
 #include "algorithms.h"
 
 
-
 std::vector<double> Player_Hedge::mixed_strategy() {
     std::vector<double> strategy(K_);
     // strategy representa la probabilidad de elegir cada accion
@@ -103,7 +102,7 @@ void Player_GPMW::Update(int ronda, int played_action, std::vector<double> total
 {
 
     //std::cout << "kernel tamaño " << kernel.size() << " " << this->idx_nonzeros.size();
-    this->history_payoffs[ronda] = payoff; 
+    this->history_payoffs.push_back(payoff); 
     std::vector<double> new_history;
     for (int i = 0; i < this->idx_nonzeros.size(); ++i) {
         int idx = this->idx_nonzeros[i];
@@ -114,100 +113,89 @@ void Player_GPMW::Update(int ronda, int played_action, std::vector<double> total
     // con idx_nonzeros, pero al seleccionar un brazo jugado, habra estrategias que estaran usando la carretara mientras que el brazo jugado no, y como
     // se coge del brazo jugado, se mandaria un 0. Por ejemplo: del brazo 2 se usa la carretera 14 para mandar 3, pero del brazo 1 no, si se juega el brazo uno,
     // idx_nonzeros pasara por la carretera 14 y strategyvecs[1][14] = 0 porque lo usa el brazo 2
-    this->history[ronda] =new_history;
+    this->history.push_back(new_history);
 
     int beta_t = 0.5;
-
     std::vector<double> other_occupancies(idx_nonzeros.size()); // Las ocupaciones que no son por parte del jugador
     for (size_t i = 0; i < idx_nonzeros.size(); ++i) {
         other_occupancies[i] = total_occupancies[idx_nonzeros[i]] - strategy_vecs[played_action][idx_nonzeros[i]];
     }
-    this->played_actions.push_back(played_action);
+    this->played_actions.push_back(played_action); 
+    std::vector<sample_type> dlib_X_train = history_to_dlib_samples(this->history);
+    std::vector<double> dlib_y_train = history_payoffs_to_dlib_labels(this->history_payoffs);
 
-    Eigen::MatrixXd X_train;
-    Eigen::VectorXd y_train;
-    if ((ronda) <= this->idx_nonzeros.size()) {
-        X_train.resize(ronda, 2 * idx_nonzeros.size());
-        for (int i = 0; i < ronda; ++i) {
-            for (int j = 0; j < 2 * idx_nonzeros.size(); ++j) {
-                X_train(i, j) = this->history[i][j];
-            }
-        }
+    double gamma = 0.25;
+    print_dlib_X_train(dlib_X_train, played_action, dlib_y_train);
 
-        y_train.resize(ronda);
-        for (int i = 0; i < ronda; ++i) {
-            y_train(i) = this->history_payoffs[i];
-        }
-    }
-    else { // se cogen kernel.size()=this->idx_nonzeros.size() datos aleatorios para que coincidan las matrices
-        X_train.resize(this->idx_nonzeros.size(), 2 * idx_nonzeros.size());
-        y_train.resize(this->idx_nonzeros.size());
-        std::vector<int> indices(ronda);
-        std::iota(indices.begin(), indices.end(), 0);
-        std::random_device rd;
-        std::mt19937 g(rd());
-        std::shuffle(indices.begin(), indices.end(), g);
+    dlib::rvm_regression_trainer<kernel_type> trainer;
+    trainer.set_kernel(kernel_type(gamma));
+    dlib::decision_function<kernel_type> model = trainer.train(dlib_X_train, dlib_y_train);
 
-        // Selecciona los primeros kernel.size() índices
-        std::vector<int> kernel_indices(indices.begin(), indices.begin() + this->idx_nonzeros.size());
-        for (int i = 0; i < this->idx_nonzeros.size(); ++i) {
-            int idx = kernel_indices[i];
-            for (int j = 0; j < 2 * idx_nonzeros.size(); ++j) {
-                X_train(i, j) = this->history[idx][j];
-            }
-            y_train(i) = this->history_payoffs[idx];
-        }
-
-    }
-    int noise2 = sigma_e * sigma_e;
-    int noise = sigma_e;
-    // Crear el modelo de regresión gaussiana
-    GaussianProcessRegression gpr(kernel, noise);
-    std::cout << kernel.size() << "X historia pasada::" << std::endl << X_train << std::endl << std::endl;
-    std::cout << "Y Payoff pasada::" << std::endl << y_train << std::endl << std::endl;
-    /*std::cout << kernel << std::endl; */
-
-    // Entrenar el modelo
-    gpr.train(X_train, y_train);
-
-    std::vector<int> payoffs(K_);
-    for (int a = 0; a < this->K_; a++) {
-        Eigen::MatrixXd x1(1, idx_nonzeros.size());
+    for (int a = 0; a < K_; a++) {
+        dlib::matrix<double, 1, 0> x1(1, idx_nonzeros.size());
         for (int i = 0; i < idx_nonzeros.size(); ++i) {
             x1(0, i) = strategy_vecs[a][idx_nonzeros[i]];
         }
-        
 
-        Eigen::MatrixXd x2(1, idx_nonzeros.size());
+        dlib::matrix<double, 1, 0> x2(1, idx_nonzeros.size());
         for (int i = 0; i < idx_nonzeros.size(); ++i) {
             x2(0, i) = other_occupancies[i] + x1(0, i);
         }
 
-        Eigen::MatrixXd X_test(1, 2 * idx_nonzeros.size());
-        X_test << x1, x2;
+        dlib::matrix<double, 1, 0> X_test(1, 2 * idx_nonzeros.size());
+        set_subm(X_test, 0, 0, 1, idx_nonzeros.size()) = x1;
+        set_subm(X_test, 0, idx_nonzeros.size(), 1, idx_nonzeros.size()) = x2;
 
-        std::cout << "X tests" << X_test << std::endl;
+        // Realizar la predicción
+        double prediction = model(X_test);
+        std::cout << a << " - Predicción:   " << prediction << std::endl;
+    }    
+}
 
-        // Hacer predicciones
-        //std::cout << X_test.cols() << " " << kernel.cols();
-
-        std::pair<Eigen::VectorXd, Eigen::VectorXd> predictions_and_variances = gpr.predict(X_test);
-        Eigen::VectorXd predictions = predictions_and_variances.first;
-        Eigen::VectorXd variances = predictions_and_variances.second;
-
-        // Imprimir resultados
-        std::cout << "Brazo " << a << " Predictions:" << predictions << " Variance:" << variances << std::endl;
-        
-        this->ucb_rewards_est[a] = predictions(0) + beta_t * variances(0);
-        this->mean_rewards_est[a] = predictions(0);
-        this->std_rewards_est[a] = variances(0);
-        payoffs.push_back(this->ucb_rewards_est[a]);
+void print_dlib_X_train(const std::vector<sample_type>& dlib_X_train, int brazo, std::vector<double> payoffs) {
+    for (std::size_t i = 0; i < dlib_X_train.size(); ++i) {
+        std::cout << "Sample " << i + 1 << ":\n";
+        for (std::size_t j = 0; j < dlib_X_train[i].size(); ++j) {
+            std::cout << dlib_X_train[i](j) << " ";
+        }
+        std::cout  <<"Payoff: " << payoffs[i] << " Brazo: " << brazo<< std::endl;
     }
+}
 
-    
+std::vector<sample_type> eigen_to_dlib_matrix(const Eigen::MatrixXd& eigen_matrix) {
+    std::vector<sample_type> dlib_matrix;
+    for (int i = 0; i < eigen_matrix.rows(); ++i) {
+        sample_type row(eigen_matrix.cols());
+        for (int j = 0; j < eigen_matrix.cols(); ++j) {
+            row(j) = eigen_matrix(i, j);
+        }
+        dlib_matrix.push_back(row);
+    }
+    return dlib_matrix;
+}
 
-    int wr = 34;
+std::vector<double> eigen_to_double_vector(const Eigen::VectorXd& eigen_vector) {
+    std::vector<double> double_vector(eigen_vector.size());
+    for (int i = 0; i < eigen_vector.size(); ++i) {
+        double_vector[i] = eigen_vector(i);
+    }
+    return double_vector;
+}
 
+std::vector<sample_type> history_to_dlib_samples(const std::vector<std::vector<double>>& history) {
+    std::vector<sample_type> dlib_samples;
+    for (const auto& row : history) {
+        sample_type sample(row.size());
+        for (std::size_t i = 0; i < row.size(); ++i) {
+            sample(i) = row[i];
+        }
+        dlib_samples.push_back(sample);
+    }
+    return dlib_samples;
+}
+
+std::vector<double> history_payoffs_to_dlib_labels(const std::vector<double>& history_payoffs) {
+    return history_payoffs;
 }
 
 
@@ -328,7 +316,51 @@ void Player_cGPMW::Update_history(int played_action, double payoff, Eigen::Vecto
 
       x_concatenated << x1, x2;
       x_concatenated.transposeInPlace();
-      VectorXr x_in = Eigen::Map<VectorXr>(x_concatenated.data(), x_concatenated.size());*/
+      VectorXr x_in = Eigen::Map<VectorXr>(x_concatenated.data(), x_concatenated.size());
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+        arma::mat X_train_arma(2 * idx_nonzeros.size(), ronda);
+    arma::rowvec y_train_arma(ronda);
+
+    for (int i = 0; i < ronda; ++i) {
+        for (int j = 0; j < 2 * idx_nonzeros.size(); ++j) {
+            X_train_arma(j, i) = this->history[i][j];
+        }
+        y_train_arma(i) = this->history_payoffs[i];
+    }
+
+    // Entrenar el modelo
+    mlpack::regression::LinearRegression lr(X_train_arma, y_train_arma);
+
+    // Hacer predicciones
+    std::vector<double> predictions;
+    for (int a = 0; a < this->K_; a++) {
+        arma::vec x(2 * idx_nonzeros.size());
+        for (int i = 0; i < idx_nonzeros.size(); ++i) {
+            x(i) = strategy_vecs[a][idx_nonzeros[i]];
+            x(idx_nonzeros.size() + i) = other_occupancies[i] + x(i);
+        }
+        arma::rowvec pred;
+        lr.Predict(x,pred);
+        arma::rowvec residuals = y_train_arma - pred;
+        double prediction = pred(0);
+        double variance = arma::var(residuals);
+        double stddev = std::sqrt(variance);
+        predictions.push_back(prediction);
+ 
+      
+      
+      */
 
 int Player::sample_action()
 {
@@ -352,3 +384,5 @@ PlayerType Player::getType()
 {
     return this->type_;
 }
+
+
