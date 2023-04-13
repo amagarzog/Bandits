@@ -146,9 +146,8 @@ void Player_GPMW::Update(int ronda, int played_action, std::vector<double> total
         set_subm(X_test, 0, 0, 1, idx_nonzeros.size()) = x1;
         set_subm(X_test, 0, idx_nonzeros.size(), 1, idx_nonzeros.size()) = x2;
 
-        // Realizar la predicción
         double prediction = model(X_test);
-        std::cout << a << " - Predicción:   " << prediction << std::endl;
+        std::cout << a << " - Prediccion:   " << prediction << std::endl;
     }    
 }
 
@@ -160,26 +159,6 @@ void print_dlib_X_train(const std::vector<sample_type>& dlib_X_train, int brazo,
         }
         std::cout  <<"Payoff: " << payoffs[i] << " Brazo: " << brazo<< std::endl;
     }
-}
-
-std::vector<sample_type> eigen_to_dlib_matrix(const Eigen::MatrixXd& eigen_matrix) {
-    std::vector<sample_type> dlib_matrix;
-    for (int i = 0; i < eigen_matrix.rows(); ++i) {
-        sample_type row(eigen_matrix.cols());
-        for (int j = 0; j < eigen_matrix.cols(); ++j) {
-            row(j) = eigen_matrix(i, j);
-        }
-        dlib_matrix.push_back(row);
-    }
-    return dlib_matrix;
-}
-
-std::vector<double> eigen_to_double_vector(const Eigen::VectorXd& eigen_vector) {
-    std::vector<double> double_vector(eigen_vector.size());
-    for (int i = 0; i < eigen_vector.size(); ++i) {
-        double_vector[i] = eigen_vector(i);
-    }
-    return double_vector;
 }
 
 std::vector<sample_type> history_to_dlib_samples(const std::vector<std::vector<double>>& history) {

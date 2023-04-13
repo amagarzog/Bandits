@@ -49,8 +49,6 @@ plus: se podría crear un .h y un .cpp para player y otro para cada tipo.
 
 typedef dlib::matrix<double, 0, 1> sample_type;
 typedef dlib::radial_basis_kernel<sample_type> kernel_type;
-std::vector<sample_type> eigen_to_dlib_matrix(const Eigen::MatrixXd& eigen_matrix);
-std::vector<double> eigen_to_double_vector(const Eigen::VectorXd& eigen_vector);
 void print_dlib_X_train(const std::vector<sample_type>& dlib_X_train, int brazo,  std::vector<double> payoffs);
 
 std::vector<sample_type> history_to_dlib_samples(const std::vector<std::vector<double>>& history);
