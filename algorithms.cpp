@@ -101,7 +101,11 @@ int Player_GPMW::sample_action() {
 void Player_GPMW::Update(int ronda, int played_action, std::vector<double> total_occupancies, double payoff, std::vector<double> Capacities_t)
 {
 
-    //std::cout << "kernel tamaño " << kernel.size() << " " << this->idx_nonzeros.size();
+    this->played_actions.push_back(played_action);
+    for (int i = 0; i < played_actions.size(); i++) {
+        //std::cout << "Brazo jugado Ronda " << i << ": " << played_actions[i] << ", ";
+    }
+    std::cout << std::endl;
     this->history_payoffs.push_back(payoff); 
     std::vector<double> new_history;
     for (int i = 0; i < this->idx_nonzeros.size(); ++i) {
@@ -120,36 +124,77 @@ void Player_GPMW::Update(int ronda, int played_action, std::vector<double> total
     for (size_t i = 0; i < idx_nonzeros.size(); ++i) {
         other_occupancies[i] = total_occupancies[idx_nonzeros[i]] - strategy_vecs[played_action][idx_nonzeros[i]];
     }
-    this->played_actions.push_back(played_action); 
-    std::vector<sample_type> dlib_X_train = history_to_dlib_samples(this->history);
-    std::vector<double> dlib_y_train = history_payoffs_to_dlib_labels(this->history_payoffs);
+    if (ronda > 0) {
+        std::vector<sample_type> dlib_X_train = history_to_dlib_samples(this->history);
+        std::vector<double> dlib_y_train = history_payoffs_to_dlib_labels(this->history_payoffs);
 
-    double gamma = 0.25;
-    print_dlib_X_train(dlib_X_train, played_action, dlib_y_train);
+        double gamma = 0.25;
+        //print_dlib_X_train(dlib_X_train, played_action, dlib_y_train);
 
-    dlib::rvm_regression_trainer<kernel_type> trainer;
-    trainer.set_kernel(kernel_type(gamma));
-    dlib::decision_function<kernel_type> model = trainer.train(dlib_X_train, dlib_y_train);
+        dlib::rvm_regression_trainer<kernel_type> trainer;
+        trainer.set_kernel(kernel_type(gamma));
+        dlib::decision_function<kernel_type> model = trainer.train(dlib_X_train, dlib_y_train);
 
-    for (int a = 0; a < K_; a++) {
-        dlib::matrix<double, 1, 0> x1(1, idx_nonzeros.size());
-        for (int i = 0; i < idx_nonzeros.size(); ++i) {
-            x1(0, i) = strategy_vecs[a][idx_nonzeros[i]];
+
+        for (int a = 0; a < K_; a++) {
+            dlib::matrix<double, 1, 0> x1(1, idx_nonzeros.size());
+            for (int i = 0; i < idx_nonzeros.size(); ++i) {
+                x1(0, i) = strategy_vecs[a][idx_nonzeros[i]];
+            }
+
+            dlib::matrix<double, 1, 0> x2(1, idx_nonzeros.size());
+            for (int i = 0; i < idx_nonzeros.size(); ++i) {
+                x2(0, i) = other_occupancies[i] + x1(0, i);
+            }
+
+            dlib::matrix<double, 1, 0> X_test(1, 2 * idx_nonzeros.size());
+            set_subm(X_test, 0, 0, 1, idx_nonzeros.size()) = x1;
+            set_subm(X_test, 0, idx_nonzeros.size(), 1, idx_nonzeros.size()) = x2;
+
+            double prediction = model(X_test);
+            double variance = calculate_residual_variance(model, dlib_X_train, dlib_y_train);
+            //std::cout << a << " - Prediccion:   " << prediction << " " << variance << std::endl;
+
+
+            this->ucb_rewards_est[a] = prediction + variance * beta_t;
+            double payoff = std::max(this->ucb_rewards_est[a], min_payoff_);
+            payoff = std::min(payoff, max_payoff_);
+
+            double p1 = (payoff - min_payoff_);
+            double p2 = (payoff - min_payoff_);
+            double payoff_scaled = (payoff - min_payoff_) / (max_payoff_ - min_payoff_);
+            double loss = 1.0 - payoff_scaled;
+            this->cum_losses[a] = this->cum_losses[a] + loss;
+
+            double weight = std::exp(-this->gamma_t_ * this->cum_losses[a]);
+            this->weights_[a] = weight;
         }
 
-        dlib::matrix<double, 1, 0> x2(1, idx_nonzeros.size());
-        for (int i = 0; i < idx_nonzeros.size(); ++i) {
-            x2(0, i) = other_occupancies[i] + x1(0, i);
-        }
-
-        dlib::matrix<double, 1, 0> X_test(1, 2 * idx_nonzeros.size());
-        set_subm(X_test, 0, 0, 1, idx_nonzeros.size()) = x1;
-        set_subm(X_test, 0, idx_nonzeros.size(), 1, idx_nonzeros.size()) = x2;
-
-        double prediction = model(X_test);
-        std::cout << a << " - Prediccion:   " << prediction << std::endl;
-    }    
+        for (int j = 0; j < weights_.size(); j++)
+            ;//std::cout << "Peso Brazo : "<< j << " - " << weights_[j] << " | ";
+        //std::cout << std::endl;
+    }
 }
+
+double calculate_residual_variance(dlib::decision_function<kernel_type>& model,
+    const std::vector<sample_type>& dlib_X_train,
+    const std::vector<double>& dlib_y_train) {
+
+    double residuals_mean = 0.0;
+    double residuals_variance = 0.0;
+    for (size_t i = 0; i < dlib_X_train.size(); ++i) {
+        double prediction = model(dlib_X_train[i]);
+        double residual = dlib_y_train[i] - prediction;
+        residuals_mean += residual;
+        residuals_variance += residual * residual;
+    }
+    residuals_mean /= dlib_X_train.size();
+    residuals_variance /= dlib_X_train.size() - dlib_X_train[0].size() - 1;
+
+    return residuals_variance;
+}
+
+
 
 void print_dlib_X_train(const std::vector<sample_type>& dlib_X_train, int brazo, std::vector<double> payoffs) {
     for (std::size_t i = 0; i < dlib_X_train.size(); ++i) {
@@ -157,7 +202,7 @@ void print_dlib_X_train(const std::vector<sample_type>& dlib_X_train, int brazo,
         for (std::size_t j = 0; j < dlib_X_train[i].size(); ++j) {
             std::cout << dlib_X_train[i](j) << " ";
         }
-        std::cout  <<"Payoff: " << payoffs[i] << " Brazo: " << brazo<< std::endl;
+        std::cout  <<"Payoff: " << payoffs[i]<< std::endl;
     }
 }
 

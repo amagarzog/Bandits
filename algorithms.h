@@ -53,6 +53,7 @@ void print_dlib_X_train(const std::vector<sample_type>& dlib_X_train, int brazo,
 
 std::vector<sample_type> history_to_dlib_samples(const std::vector<std::vector<double>>& history);
 std::vector<double> history_payoffs_to_dlib_labels(const std::vector<double>& history_payoffs);
+double calculate_residual_variance(dlib::decision_function<kernel_type>& model, const std::vector<sample_type>& dlib_X_train, const std::vector<double>& dlib_y_train);
 
 enum class PlayerType {
     cGPMW,
@@ -133,8 +134,6 @@ public:
         }
 
         this->cum_losses = std::vector<double>(K, 0.0);
-        this->mean_rewards_est = std::vector<double>(K, 0.0);
-        this->std_rewards_est = std::vector<double>(K, 0.0);
         this->ucb_rewards_est = std::vector<double>(K, 0.0);
         this->gamma_t_ = std::sqrt(8 * log(K) / T);// tasa aprendizaje
         this->kernel = kernel;
