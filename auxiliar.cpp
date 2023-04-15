@@ -90,15 +90,20 @@ void GameData::Simulate_Game(int run, std::vector<Player*>& Players, int T, cons
                 std::normal_distribution<double> dist(mean, std_dev);  // distribución normal
                 double noise = dist(gen);  // generar una muestra aleatoria. dist es un objeto de la clase std::normal_distribution que representa la distribución normal con los parámetros especificados. 
                 double noisy_loss = Incurred_losses[t][i] + noise;
-                std::cout << "Ronda: " << t << std::endl;
+                //std::cout << "Ronda: " << t << std::endl;
                 Players[i]->Update(t, this->Played_actions[t][i], Total_occupancies.back(), -noisy_loss, Capacities_t); 
                 /*Se pasan las elecciones de todos los jugadores (retroalimentación baja), la ocupación de las carretereas en la última ronda, errepentimiento ruidoso, y las capacidades de cada carretera en 
                     el momento t (en cada momento t hay un contexto distinto y por tanto capacidades distintas)*/
             }
 
             if (Players[i]->getType() == PlayerType::cGPMW) {
-                //double noisy_loss = Game_data.Incurred_losses[t][i] + normal_distribution<double>(0, sigmas[i])(rng);
-                //Players[i]->Update_history(Game_data.Played_actions[t][i], -noisy_loss, Total_occupancies.back(), Capacities_t);
+                double mean = 0.0;  // media
+                double std_dev = sigmas[i];  // desviación estándar
+                std::mt19937 gen(1234);  // semilla del generador de números aleatorios
+                std::normal_distribution<double> dist(mean, std_dev);  // distribución normal
+                double noise = dist(gen);  // generar una muestra aleatoria. dist es un objeto de la clase std::normal_distribution que representa la distribución normal con los parámetros especificados. 
+                double noisy_loss = Incurred_losses[t][i] + noise;
+                //Players[i]->Update(Game_data.Played_actions[t][i], -noisy_loss, Total_occupancies.back(), Capacities_t);
             }
 
         }
@@ -133,7 +138,7 @@ void Initialize_Players(int N, const std::vector<std::pair<int, int>>& od_Pairs,
                 Players[i] = new Player_GPMW(K_i, T, min_payoff, max_payoff, Strategy_vectors[i], Kernels[i], sigmas[i]);
             }
             else if (Algo == "cGPMW") {
-                //Players[i] = new Player_cGPMW(K_i, T, min_payoff, max_payoff, Capacities[i][0], Strategy_vectors[i][0], Kernels[i][0], sigmas[i], version);
+                Players[i] = new Player_cGPMW(K_i, T, min_payoff, max_payoff, Capacities, Strategy_vectors[i], Kernels[i], sigmas[i]);
             }
         }
         else {

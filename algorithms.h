@@ -109,6 +109,8 @@ public:
     double get_max_payoff() const { return max_payoff_; }
 };
 
+
+
 class Player_GPMW : public Player {
     
     typedef Eigen::Matrix<double, Eigen::Dynamic, 1> VectorXr;
@@ -170,73 +172,58 @@ private:
 
 
 
-/*
-Player GPMW
-*//*
-
-class Player_GPMW {
+class Player_cGPMW : public Player {
 public:
-    Player_GPMW(int K, int T, double min_payoff, double max_payoff, std::vector<std::vector<double>> my_strategy_vecs, double kernel, double sigma_e);
+    Player_cGPMW(int K, int T, double min_payoff, double max_payoff, std::vector<std::vector<double>> Capacities, std::vector<std::vector<int>>  my_strategy_vector, Eigen::MatrixXd kernel, double sigma_e) {
+        this->type_ = PlayerType::cGPMW;
+        this->K_ = K;
+        this->T_ = T;
+        this->min_payoff_ = min_payoff;
+        this->max_payoff_ = max_payoff;
+        this->weights_ = std::vector<double>(K, 1);
+        // para cada carretera se suman los valores de los caminos para ver si el jugador pasa por esa carretera en algun camino
+        this->idx_nonzeros;
+        for (int carr = 0; carr < my_strategy_vector[0].size(); carr++) { //Strategy_vectors[ind][0].size() da igual si cogiese Strategy_vectors[ind][1].size() pq todos tienen size = 76 (carreteras)
+            int suma = 0;
+            for (int camino = 0; camino < my_strategy_vector.size(); ++camino) {
+                suma += my_strategy_vector[camino][carr];
+            }
+            if (suma != 0) this->idx_nonzeros.push_back(carr); //TODO pq se incluye la suma? 
+        }
+
+        this->gamma_t_ = std::sqrt(8 * log(K) / T);// tasa aprendizaje
+        this->kernel = kernel;
+        this->sigma_e = sigma_e;
+        this->strategy_vecs = my_strategy_vector;
+        this->Capacities = Capacities;
+
+        history_payoffs = std::vector<double>(T);
+        history = std::vector<std::vector<double>>(T);
+        //demand = *std::max_element(my_strategy_vector[0].begin(), my_strategy_vector[0].end());
+    }
 
     std::vector<double> mixed_strategy();
-    int sample_action();
-    void Update(int played_action, std::vector<std::vector<double>> total_occupancies, std::vector<double> payoff, std::vector<double> Capacities_t);
-
+    int sample_action() override;
+    //void Update(int ronda, int played_action, std::vector<double> total_occupancies, double payoff, std::vector<double> Capacities_t) override;
 
 private:
-    std::string type;
-    int K;
-    double min_payoff;
-    double max_payoff;
-    std::vector<double> weights;
-    int T;
     std::vector<int> idx_nonzeros;
 
-    std::vector<double> cum_losses;
-    std::vector<double> mean_rewards_est;
-    std::vector<double> std_rewards_est;
-    std::vector<double> ucb_rewards_est;
-    double gamma_t;
-    double kernel;
+    Eigen::MatrixXd kernel;
     double sigma_e;
-    std::vector<std::vector<double>> strategy_vecs;
+    std::vector<std::vector<int>> strategy_vecs;
 
     std::vector<double> history_payoffs;
     std::vector<std::vector<double>> history;
-    double demand;
+    std::vector<int> played_actions;
+
+
+    std::vector<std::vector<double>> Capacities;
+    std::vector<double> contexts;
+    std::vector<double> idx_balls;
+    std::vector<double> history_occupancies; // tamaño?
+
+
 };
-
-
-/*
-class Player_cGPMW {
-public:
-    Player_cGPMW(int K, int T, double min_payoff, double max_payoff, VectorXd Capacities, MatrixXd my_strategy_vecs,
-        GPy::RBF* kernel, double sigma_e, int version);
-
-    std::string type;
-    int K;
-    double min_payoff;
-    double max_payoff;
-    VectorXd weights;
-    int T;
-    VectorXi idx_nonzeros;
-    double gamma_t;
-    GPy::RBF* kernel;
-    double sigma_e;
-    MatrixXd strategy_vecs;
-    MatrixXd history;
-    MatrixXd history_payoffs;
-    MatrixXd history_played_actions;
-    std::vector<VectorXd> history_occupancies;
-    VectorXd contexts;
-    VectorXi idx_balls;
-    int version;
-    VectorXd Capacities;
-
-    VectorXd mixed_strategy();
-    int sample_action();
-    void Update_history(int played_action, double payoff, VectorXd occupancies, VectorXd capacities_t);
-    void Compute_strategy(VectorXd capacities_t);
-};*/
 
 #endif
