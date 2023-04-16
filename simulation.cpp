@@ -16,7 +16,7 @@ void Simulation::selectParameters(){
 	this->numcontextos = 5;
 	this->polykernel = 4;
 	this->reoptimize = false;
-	this->Algo = "GPMW";
+	this->Algo = "cGPMW";
 }
 
 void Simulation::init(){

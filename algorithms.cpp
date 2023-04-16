@@ -247,6 +247,83 @@ int Player_cGPMW::sample_action()
     return K_ - 1; // In case of numerical errors
 }
 
+void Player_cGPMW::UpdateHistory(int ronda, int played_action, std::vector<double> total_occupancies, double payoff, std::vector<double> capacitites)
+{
+    this->played_actions.push_back(played_action);
+    this->history_payoffs.push_back(payoff);
+    this->history_occupancies.push_back(total_occupancies);
+
+
+    std::vector<int> strategy_row = this->strategy_vecs[played_action];
+
+    std::vector<double> nonzero_strategy_elems;
+    for (int i : idx_nonzeros)
+    {
+        nonzero_strategy_elems.push_back(strategy_row[i]);
+    }
+
+    std::vector<double> occupancy_ratios;
+    for (int i : idx_nonzeros)
+    {
+        occupancy_ratios.push_back(total_occupancies[i] / capacitites[i]);
+    }
+
+    std::vector<double> history_row;
+
+    history_row.insert(history_row.end(), nonzero_strategy_elems.begin(), nonzero_strategy_elems.end());
+    history_row.insert(history_row.end(), occupancy_ratios.begin(), occupancy_ratios.end());
+
+
+    // Add the concatenated row to history
+    history.push_back(history_row);
+
+}
+
+void Player_cGPMW::computeStrategys(const std::vector<double>& capacities_t)
+{
+    using kernel_type = dlib::radial_basis_kernel<dlib::matrix<double, 1, 0>>;
+    using sample_type = dlib::matrix<double, 1, 0>;
+
+    double beta_t = 0.5;
+
+    std::vector<double> cum_payoffs_scaled(K_, 0.0);
+    int num_t = 0;
+
+   
+
+    num_t += 1;
+    std::vector<double> payoffs(K_, 0.0);
+    std::vector<double> other_occupancies_0(idx_nonzeros.size());
+
+    for (size_t i = 0; i < idx_nonzeros.size(); ++i) {
+        other_occupancies_0[i] = history_occupancies[0][idx_nonzeros[i]] - strategy_vecs[played_actions[0]][idx_nonzeros[i]];
+    }
+
+    for (int a1 = 0; a1 < K_; ++a1) {
+        std::vector<double> x1(idx_nonzeros.size());
+        std::vector<double> x2(idx_nonzeros.size());
+
+        for (size_t i = 0; i < idx_nonzeros.size(); ++i) {
+            x1[i] = strategy_vecs[a1][idx_nonzeros[i]];
+            x2[i] = (other_occupancies_0[i] + x1[i]) / capacities_t[idx_nonzeros[i]];
+        }
+
+        double mu = 0;
+        double var = kernel(x1, x2); // Asume que implementas la función kernel
+        double sigma = std::sqrt(std::max(var, 1e-6));
+
+        payoffs[a1] = mu + beta_t * sigma;
+    }
+
+    for (int a1 = 0; a1 < K_; ++a1) {
+        payoffs[a1] = std::max(payoffs[a1], min_payoff_);
+        payoffs[a1] = std::min(payoffs[a1], max_payoff_);
+        double payoff_scaled = (payoffs[a1] - min_payoff_) / (max_payoff_ - min_payoff_);
+        cum_payoffs_scaled[a1] += payoff_scaled;
+    }
+    
+}
+
 
 
 
@@ -263,6 +340,14 @@ void Player::Update(std::vector<int> played_actions, int player_idx, const Netwo
 }
 
 void Player::Update(int ronda, int played_action, std::vector<double> total_occupancies, double payoff, std::vector<double> Capacities_t)
+{
+}
+
+void Player::UpdateHistory(int ronda, int played_action, std::vector<double> total_occupancies, double payoff, std::vector<double> capacitites)
+{
+}
+
+void Player::computeStrategys(const std::vector<double>& capacities_t)
 {
 }
 

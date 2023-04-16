@@ -79,8 +79,8 @@ public:
     //GPMW
     virtual void Update(int ronda, int played_action, std::vector<double> total_occupancies, double payoff, std::vector<double> Capacities_t);
     //cGPMW
-    //virtual void Update(std::vector<int> played_actions, int player_idx, const NetworkData& network, std::vector<double> Capacities_t, std::vector<std::vector<std::vector<int>>> Strategy_vectors);
-
+    virtual void UpdateHistory(int ronda, int played_action, std::vector<double> total_occupancies, double payoff, std::vector<double> capacitites);
+    virtual void computeStrategys(const std::vector<double>& capacities_t);
     int getK();
     PlayerType getType();
 
@@ -204,7 +204,8 @@ public:
 
     std::vector<double> mixed_strategy();
     int sample_action() override;
-    //void Update(int ronda, int played_action, std::vector<double> total_occupancies, double payoff, std::vector<double> Capacities_t) override;
+    void UpdateHistory(int ronda, int played_action, std::vector<double> total_occupancies, double payoff, std::vector<double> capacitites) override;
+    void computeStrategys(const std::vector<double>& capacities_t) override;
 
 private:
     std::vector<int> idx_nonzeros;
@@ -219,10 +220,9 @@ private:
 
 
     std::vector<std::vector<double>> Capacities;
+    std::vector<std::vector<double>> history_occupancies;
     std::vector<double> contexts;
     std::vector<double> idx_balls;
-    std::vector<double> history_occupancies; // tamaño?
-
 
 };
 

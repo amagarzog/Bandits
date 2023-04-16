@@ -28,7 +28,7 @@ void GameData::Simulate_Game(int run, std::vector<Player*>& Players, int T, cons
         // 1 - Cada jugador juega una acción
         for (int i = 0; i < N; ++i) {
             if (Players[i]->getType() == PlayerType::cGPMW && t > 0) {
-                //Players[i]->Compute_strategy(Capacities_t); // TODO compute strategy es del cGPMW
+                Players[i]->computeStrategys(Capacities_t); 
             }
             played_actions_t[i] = Players[i]->sample_action();  // Los jugadores no controlados van a usar siempre su único brazo que es el 0
         }
@@ -103,7 +103,7 @@ void GameData::Simulate_Game(int run, std::vector<Player*>& Players, int T, cons
                 std::normal_distribution<double> dist(mean, std_dev);  // distribución normal
                 double noise = dist(gen);  // generar una muestra aleatoria. dist es un objeto de la clase std::normal_distribution que representa la distribución normal con los parámetros especificados. 
                 double noisy_loss = Incurred_losses[t][i] + noise;
-                //Players[i]->Update(Game_data.Played_actions[t][i], -noisy_loss, Total_occupancies.back(), Capacities_t);
+                Players[i]->UpdateHistory(t, this->Played_actions[t][i], Total_occupancies.back(), noisy_loss,Capacities_t);
             }
 
         }
