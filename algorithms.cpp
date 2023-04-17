@@ -160,8 +160,8 @@ void Player_GPMW::Update(int ronda, int played_action, std::vector<double> total
             double payoff = std::max(this->ucb_rewards_est[a], min_payoff_);
             payoff = std::min(payoff, max_payoff_);
 
-            double p1 = (payoff - min_payoff_);
-            double p2 = (payoff - min_payoff_);
+            /*double p1 = (payoff - min_payoff_);
+            double p2 = (payoff - min_payoff_);*/
             double payoff_scaled = (payoff - min_payoff_) / (max_payoff_ - min_payoff_);
             double loss = 1.0 - payoff_scaled;
             this->cum_losses[a] = this->cum_losses[a] + loss;
@@ -253,7 +253,7 @@ void Player_cGPMW::UpdateHistory(int ronda, int played_action, std::vector<doubl
     this->history_payoffs.push_back(payoff);
     this->history_occupancies.push_back(total_occupancies);
 
-
+    std::cout << "Ronda " << ronda << " payoff: " << payoff << std::endl;
     std::vector<int> strategy_row = this->strategy_vecs[played_action];
 
     std::vector<double> nonzero_strategy_elems;
@@ -269,7 +269,7 @@ void Player_cGPMW::UpdateHistory(int ronda, int played_action, std::vector<doubl
     }
 
     std::vector<double> history_row;
-
+    // cGPMW es distinto a GPMW ya que al contrario que el segundo, este bandido rellena su history con los strategyvecs y con los ratios de ocupados
     history_row.insert(history_row.end(), nonzero_strategy_elems.begin(), nonzero_strategy_elems.end());
     history_row.insert(history_row.end(), occupancy_ratios.begin(), occupancy_ratios.end());
 
@@ -280,47 +280,65 @@ void Player_cGPMW::UpdateHistory(int ronda, int played_action, std::vector<doubl
 }
 
 void Player_cGPMW::computeStrategys(const std::vector<double>& capacities_t)
-{
-    using kernel_type = dlib::radial_basis_kernel<dlib::matrix<double, 1, 0>>;
-    using sample_type = dlib::matrix<double, 1, 0>;
+{   
+    int rondas = this->history.size();
+    std::vector<double> cumpayoffsscaled(K, 0.0);
+    double gamma = 0.25, beta_t = 0.5;
+    dlib::rvm_regression_trainer<kernel_type> trainer;
+    trainer.set_kernel(kernel_type(gamma));
+    std::vector<sample_type> dlib_X_train = history_to_dlib_samples(this->history);
+    std::vector<double> dlib_y_train = history_payoffs_to_dlib_labels(this->history_payoffs);
+    for (int tau = 1; tau < rondas; ++tau) {
+        std::vector<sample_type> new_dlib_X_train(tau + 1);
+        std::vector<double> new_dlib_y_train(tau + 1);
 
-    double beta_t = 0.5;
-
-    std::vector<double> cum_payoffs_scaled(K_, 0.0);
-    int num_t = 0;
-
-   
-
-    num_t += 1;
-    std::vector<double> payoffs(K_, 0.0);
-    std::vector<double> other_occupancies_0(idx_nonzeros.size());
-
-    for (size_t i = 0; i < idx_nonzeros.size(); ++i) {
-        other_occupancies_0[i] = history_occupancies[0][idx_nonzeros[i]] - strategy_vecs[played_actions[0]][idx_nonzeros[i]];
-    }
-
-    for (int a1 = 0; a1 < K_; ++a1) {
-        std::vector<double> x1(idx_nonzeros.size());
-        std::vector<double> x2(idx_nonzeros.size());
-
-        for (size_t i = 0; i < idx_nonzeros.size(); ++i) {
-            x1[i] = strategy_vecs[a1][idx_nonzeros[i]];
-            x2[i] = (other_occupancies_0[i] + x1[i]) / capacities_t[idx_nonzeros[i]];
+        for (int i = 0; i <= tau; ++i) { // desde 0 hata tau
+            new_dlib_X_train[i] = dlib_X_train[i];
+            new_dlib_y_train[i] = dlib_y_train[i];
+        }
+        dlib::decision_function<kernel_type> model = trainer.train(dlib_X_train, dlib_y_train);
+        std::vector<double> other_occupancies = history_occupancies[tau];
+        // calcula other occupancies restando total a las acciones strategyvec[accionesjugadasx jugador ronda tau][idx q es nonzero]
+        for (int idx : idx_nonzeros) {
+            other_occupancies[idx] -= strategy_vecs[played_actions[tau]][idx];
         }
 
-        double mu = 0;
-        double var = kernel(x1, x2); // Asume que implementas la función kernel
-        double sigma = std::sqrt(std::max(var, 1e-6));
+        std::vector<double> payoffs(K, 0.0);
 
-        payoffs[a1] = mu + beta_t * sigma;
-    }
+        for (int a = 0; a < this->K_; a++) {
+            dlib::matrix<double, 1, 0> x1(1, idx_nonzeros.size());
+            for (int i = 0; i < idx_nonzeros.size(); ++i) {
+                x1(0, i) = strategy_vecs[a][idx_nonzeros[i]];
+            }
+            dlib::matrix<double, 1, 0> x2(1, idx_nonzeros.size());
+            for (int i = 0; i < idx_nonzeros.size(); ++i) {
+                x2(0, i) = (other_occupancies[i] + x1(0, i)) / capacities_t[idx_nonzeros[i]];
+            }
+            dlib::matrix<double, 1, 0> X_test(1, 2 * idx_nonzeros.size());
+            set_subm(X_test, 0, 0, 1, idx_nonzeros.size()) = x1;
+            set_subm(X_test, 0, idx_nonzeros.size(), 1, idx_nonzeros.size()) = x2;
 
-    for (int a1 = 0; a1 < K_; ++a1) {
-        payoffs[a1] = std::max(payoffs[a1], min_payoff_);
-        payoffs[a1] = std::min(payoffs[a1], max_payoff_);
-        double payoff_scaled = (payoffs[a1] - min_payoff_) / (max_payoff_ - min_payoff_);
-        cum_payoffs_scaled[a1] += payoff_scaled;
+            double prediction = model(X_test);
+            double variance = calculate_residual_variance(model, dlib_X_train, dlib_y_train);
+            std::cout << a << " - Prediccion:   " << prediction << " " << variance << std::endl;
+
+
+            payoffs[a] = prediction + variance * beta_t;
+            double payoff = std::max(payoffs[a], min_payoff_);
+            payoff = std::min(payoff, max_payoff_);
+            double payoff_scaled = (payoff - min_payoff_) / (max_payoff_ - min_payoff_);
+            cumpayoffsscaled[a] = cumpayoffsscaled[a] + payoff_scaled;
+        }
     }
+    std::vector<double> cumlosses(K, 0.0);
+    for (int a = 0; a < this->K_; a++) {
+        cumlosses[a] = rondas - cumpayoffsscaled[a];
+        double weight = std::exp(-this->gamma_t_ * cumlosses[a]);
+        this->weights_[a] = weight;
+        std::cout << " Peso " << a << " " << weight;
+    }
+    std::cout << std::endl;
+
     
 }
 

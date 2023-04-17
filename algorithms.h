@@ -180,6 +180,7 @@ public:
         this->T_ = T;
         this->min_payoff_ = min_payoff;
         this->max_payoff_ = max_payoff;
+        std::cout << max_payoff << " " << min_payoff << std::endl;
         this->weights_ = std::vector<double>(K, 1);
         // para cada carretera se suman los valores de los caminos para ver si el jugador pasa por esa carretera en algun camino
         this->idx_nonzeros;
@@ -197,8 +198,8 @@ public:
         this->strategy_vecs = my_strategy_vector;
         this->Capacities = Capacities;
 
-        history_payoffs = std::vector<double>(T);
-        history = std::vector<std::vector<double>>(T);
+        //history_payoffs = std::vector<double>(T);
+        //history = std::vector<std::vector<double>>(T);
         //demand = *std::max_element(my_strategy_vector[0].begin(), my_strategy_vector[0].end());
     }
 
