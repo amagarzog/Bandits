@@ -180,7 +180,7 @@ public:
         this->T_ = T;
         this->min_payoff_ = min_payoff;
         this->max_payoff_ = max_payoff;
-        std::cout << max_payoff << " " << min_payoff << std::endl;
+        //std::cout << max_payoff << " " << min_payoff << std:: endl;
         this->weights_ = std::vector<double>(K, 1);
         // para cada carretera se suman los valores de los caminos para ver si el jugador pasa por esa carretera en algun camino
         this->idx_nonzeros;

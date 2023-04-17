@@ -96,13 +96,16 @@ void GameData::Simulate_Game(int run, std::vector<Player*>& Players, int T, cons
                     el momento t (en cada momento t hay un contexto distinto y por tanto capacidades distintas)*/
             }
 
-            if (Players[i]->getType() == PlayerType::cGPMW) {
+            if (Players[i]->getType() == PlayerType::cGPMW && t > 0) {
                 double mean = 0.0;  // media
                 double std_dev = sigmas[i];  // desviación estándar
                 std::mt19937 gen(1234);  // semilla del generador de números aleatorios
                 std::normal_distribution<double> dist(mean, std_dev);  // distribución normal
                 double noise = dist(gen);  // generar una muestra aleatoria. dist es un objeto de la clase std::normal_distribution que representa la distribución normal con los parámetros especificados. 
                 double noisy_loss = Incurred_losses[t][i] + noise;
+                if (noisy_loss < 0 || noise < 0) {
+                    //std::cout << "Error calculo noise!" << noise  <<   "   " << Incurred_losses[t][i] << std::endl;
+                }
                 Players[i]->UpdateHistory(t, this->Played_actions[t][i], Total_occupancies.back(), -noisy_loss,Capacities_t);
             }
 

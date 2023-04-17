@@ -311,6 +311,7 @@ std::vector<double> Compute_traveltimes(const NetworkData & network, const std::
     std::vector<double> unit_times(E, 0.0);
     for (int i = 0; i < E; ++i) {
         unit_times[i] = a[i] + b[i] * std::pow(Total_occupancies[i], carreteras[i].power);
+        unit_times[i] /= 100;
     }
     
 
