@@ -50,11 +50,11 @@ plus: se podría crear un .h y un .cpp para player y otro para cada tipo.
 typedef dlib::matrix<double, 0, 1> sample_type;
 typedef dlib::radial_basis_kernel<sample_type> kernel_type;
 void print_dlib_X_train(const std::vector<sample_type>& dlib_X_train, int brazo,  std::vector<double> payoffs);
-
+std::vector<double> normalize_vector(std::vector<double>& vec);
 std::vector<sample_type> history_to_dlib_samples(const std::vector<std::vector<double>>& history);
 std::vector<double> history_payoffs_to_dlib_labels(const std::vector<double>& history_payoffs);
 double calculate_residual_variance(dlib::decision_function<kernel_type>& model, const std::vector<sample_type>& dlib_X_train, const std::vector<double>& dlib_y_train);
-
+std::vector<std::vector<double>> normalize_vector_of_vectors(const std::vector<std::vector<double>>& vec_of_vecs, double& min_value, double& max_value);
 enum class PlayerType {
     cGPMW,
     Hedge,

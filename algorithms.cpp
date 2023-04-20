@@ -279,6 +279,44 @@ void Player_cGPMW::UpdateHistory(int ronda, int played_action, std::vector<doubl
 
 }
 
+
+std::vector<std::vector<double>> normalize_vector_of_vectors(const std::vector<std::vector<double>>& vec_of_vecs, double& min_value, double& max_value) {
+    std::vector<std::vector<double>> normalized_vec_of_vecs(vec_of_vecs.size(), std::vector<double>());
+
+   
+    for (size_t i = 0; i < vec_of_vecs.size(); ++i) {
+        double min_valuet = *std::min_element(vec_of_vecs[i].begin(), vec_of_vecs[i].end());
+        double max_valuet = *std::max_element(vec_of_vecs[i].begin(), vec_of_vecs[i].end());
+        if (i == 0) {
+            min_value = min_valuet;
+            max_value = max_valuet;
+        }
+        else {
+            if (min_valuet < min_value) min_value = min_valuet;
+            if (max_valuet > max_value) max_value = max_valuet;
+        }
+        normalized_vec_of_vecs[i].resize(vec_of_vecs[i].size());
+
+        for (size_t j = 0; j < vec_of_vecs[i].size(); ++j) {
+            normalized_vec_of_vecs[i][j] = (vec_of_vecs[i][j] - min_valuet) / (max_valuet - min_valuet);
+        }
+    }
+
+    return normalized_vec_of_vecs;
+}
+
+std::vector<double> normalize_vector(std::vector<double>& vec, double &min_value, double &max_value) {
+    std::vector<double> sol;
+     min_value = *std::min_element(vec.begin(), vec.end());
+     max_value = *std::max_element(vec.begin(), vec.end());
+
+    for (double& value : vec) {
+        value = (value - min_value) / (max_value - min_value);
+    }
+    return sol;
+}
+
+
 void Player_cGPMW::computeStrategys(const std::vector<double>& capacities_t)
 {   
     int rondas = this->history.size();
@@ -286,7 +324,9 @@ void Player_cGPMW::computeStrategys(const std::vector<double>& capacities_t)
     double gamma = 0.05, beta_t = 0.5;
     dlib::rvm_regression_trainer<kernel_type> trainer;
     trainer.set_kernel(kernel_type(gamma));
-    std::vector<sample_type> dlib_X_train = history_to_dlib_samples(this->history);
+    double max, min;
+    std::vector<std::vector<double>> xtrain = normalize_vector_of_vectors(this->history, max, min);
+    std::vector<sample_type> dlib_X_train = history_to_dlib_samples(xtrain);
     std::vector<double> dlib_y_train = history_payoffs_to_dlib_labels(this->history_payoffs);
     for (int tau = 1; tau < rondas; ++tau) {
         std::vector<sample_type> new_dlib_X_train(tau + 1);
@@ -306,13 +346,18 @@ void Player_cGPMW::computeStrategys(const std::vector<double>& capacities_t)
         std::vector<double> payoffs(K, 0.0);
 
         for (int a = 0; a < this->K_; a++) {
+
+            double min_value = *std::min_element(strategy_vecs[a].begin(), strategy_vecs[a].end());
+            double max_value = *std::max_element(strategy_vecs[a].begin(), strategy_vecs[a].end());
             dlib::matrix<double, 1, 0> x1(1, idx_nonzeros.size());
             for (int i = 0; i < idx_nonzeros.size(); ++i) {
-                x1(0, i) = strategy_vecs[a][idx_nonzeros[i]];
+                x1(0, i) = (strategy_vecs[a][idx_nonzeros[i]] -min) / (max - min);
             }
             dlib::matrix<double, 1, 0> x2(1, idx_nonzeros.size());
             for (int i = 0; i < idx_nonzeros.size(); ++i) {
-                x2(0, i) = (other_occupancies[i] + x1(0, i)) / (capacities_t[idx_nonzeros[i]]); // 5
+
+                double tmp = (other_occupancies[i] + x1(0, i)) / (capacities_t[idx_nonzeros[i]]); // 5
+                x2(0, i) = (tmp - min) / (max - min);
             }
             dlib::matrix<double, 1, 0> X_test(1, 2 * idx_nonzeros.size());
             set_subm(X_test, 0, 0, 1, idx_nonzeros.size()) = x1;
@@ -388,7 +433,25 @@ void Player_cGPMW::computeStrategys(const std::vector<double>& capacities_t)
 
 
 
+void normalize_dlib_matrix(dlib::matrix<double>& mat) {
+    double min_value = std::numeric_limits<double>::max();
+    double max_value = std::numeric_limits<double>::lowest();
 
+    // Find min and max values
+    for (long r = 0; r < mat.nr(); ++r) {
+        for (long c = 0; c < mat.nc(); ++c) {
+            min_value = std::min(min_value, mat(r, c));
+            max_value = std::max(max_value, mat(r, c));
+        }
+    }
+
+    // Normalize the matrix
+    for (long r = 0; r < mat.nr(); ++r) {
+        for (long c = 0; c < mat.nc(); ++c) {
+            mat(r, c) = (mat(r, c) - min_value) / (max_value - min_value);
+        }
+    }
+}
 
 
 
