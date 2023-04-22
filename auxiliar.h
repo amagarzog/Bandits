@@ -22,7 +22,10 @@ class GameData {
 public:
     GameData(int N, int T);
     void Simulate_Game(int run, std::vector<Player*>& Players, int T, const NetworkData& network, std::vector<std::vector<std::vector<int>>>& Strategy_vectors, std::vector<double>& sigmas, std::vector<std::vector<double>>& Capacities, std::vector<std::vector<double>>& Total_occupancies, std::vector<std::vector<double>>& addit_Congestions, const std::vector<int>& Contexts);
-    
+    const std::vector<std::vector<int>>& getPlayedActions() const { return Played_actions; }
+    const std::vector<std::vector<double>>& getIncurredLosses() const { return Incurred_losses; }
+    const std::vector<std::vector<double>>& getCumLosses() const { return Cum_losses; }
+
 private:
     std::vector<std::vector<int>> Played_actions;
     std::vector<double> Mixed_strategies; // no se usa

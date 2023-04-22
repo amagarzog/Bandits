@@ -125,10 +125,12 @@ void Player_GPMW::Update(int ronda, int played_action, std::vector<double> total
         other_occupancies[i] = total_occupancies[idx_nonzeros[i]] - strategy_vecs[played_action][idx_nonzeros[i]];
     }
     if (ronda > 0) {
-        std::vector<sample_type> dlib_X_train = history_to_dlib_samples(this->history);
+        double max, min;
+        std::vector<std::vector<double>> xtrain = normalize_vector_of_vectors(this->history, max, min);
+        std::vector<sample_type> dlib_X_train = history_to_dlib_samples(xtrain);
         std::vector<double> dlib_y_train = history_payoffs_to_dlib_labels(this->history_payoffs);
 
-        double gamma = 0.25;
+        double gamma = 0.21;
         //print_dlib_X_train(dlib_X_train, played_action, dlib_y_train);
 
         dlib::rvm_regression_trainer<kernel_type> trainer;
@@ -139,13 +141,15 @@ void Player_GPMW::Update(int ronda, int played_action, std::vector<double> total
         for (int a = 0; a < K_; a++) {
             dlib::matrix<double, 1, 0> x1(1, idx_nonzeros.size());
             for (int i = 0; i < idx_nonzeros.size(); ++i) {
-                x1(0, i) = strategy_vecs[a][idx_nonzeros[i]];
+                x1(0, i) = (strategy_vecs[a][idx_nonzeros[i]] - min) / (max - min);
             }
 
             dlib::matrix<double, 1, 0> x2(1, idx_nonzeros.size());
             for (int i = 0; i < idx_nonzeros.size(); ++i) {
-                x2(0, i) = other_occupancies[i] + x1(0, i);
+                double normalized_other_occupancies = (other_occupancies[i] - min) / (max - min);
+                x2(0, i) = normalized_other_occupancies + x1(0, i);
             }
+
 
             dlib::matrix<double, 1, 0> X_test(1, 2 * idx_nonzeros.size());
             set_subm(X_test, 0, 0, 1, idx_nonzeros.size()) = x1;
@@ -253,7 +257,7 @@ void Player_cGPMW::UpdateHistory(int ronda, int played_action, std::vector<doubl
     this->history_payoffs.push_back(payoff);
     this->history_occupancies.push_back(total_occupancies);
 
-    std::cout << "Ronda " << ronda << " playedarm " << played_action << " payoff: " << payoff << std::endl;
+    //std::cout << "Ronda " << ronda << " playedarm " << played_action << " payoff: " << payoff << std::endl;
     std::vector<int> strategy_row = this->strategy_vecs[played_action];
 
     std::vector<double> nonzero_strategy_elems;
@@ -321,7 +325,7 @@ void Player_cGPMW::computeStrategys(const std::vector<double>& capacities_t)
 {   
     int rondas = this->history.size();
     std::vector<double> cumpayoffsscaled(K, 0.0);
-    double gamma = 0.05, beta_t = 0.5;
+    double gamma = 0.23, beta_t = 0.5;
     dlib::rvm_regression_trainer<kernel_type> trainer;
     trainer.set_kernel(kernel_type(gamma));
     double max, min;
@@ -350,64 +354,32 @@ void Player_cGPMW::computeStrategys(const std::vector<double>& capacities_t)
             double min_value = *std::min_element(strategy_vecs[a].begin(), strategy_vecs[a].end());
             double max_value = *std::max_element(strategy_vecs[a].begin(), strategy_vecs[a].end());
             dlib::matrix<double, 1, 0> x1(1, idx_nonzeros.size());
-            for (int i = 0; i < idx_nonzeros.size(); ++i) {
-                x1(0, i) = (strategy_vecs[a][idx_nonzeros[i]] -min) / (max - min);
-            }
             dlib::matrix<double, 1, 0> x2(1, idx_nonzeros.size());
-            for (int i = 0; i < idx_nonzeros.size(); ++i) {
 
-                double tmp = (other_occupancies[i] + x1(0, i)) / (capacities_t[idx_nonzeros[i]]); // 5
-                x2(0, i) = (tmp - min) / (max - min);
+            for (int i = 0; i < idx_nonzeros.size(); ++i) {
+                x1(0, i) = (strategy_vecs[a][idx_nonzeros[i]] - min) / (max - min);
+
+                double normalized_other_occupancies = (other_occupancies[i] - min) / (max - min);
+                double normalized_capacities = (capacities_t[idx_nonzeros[i]] - min) / (max - min);
+
+                x2(0, i) = (normalized_other_occupancies + x1(0, i)) / normalized_capacities;
             }
+
             dlib::matrix<double, 1, 0> X_test(1, 2 * idx_nonzeros.size());
             set_subm(X_test, 0, 0, 1, idx_nonzeros.size()) = x1;
             set_subm(X_test, 0, idx_nonzeros.size(), 1, idx_nonzeros.size()) = x2;
 
             double prediction = model(X_test);
             double variance = calculate_residual_variance(model, dlib_X_train, dlib_y_train);
-            
-            if (std::isnan(prediction)) { // 1
-                //std::cout << "prediction!!" << std::endl;
-                prediction = this->min_payoff_;
-                
-                if (tau == rondas - 1) {
-                    std::cout << "X_test:" << std::endl;
-                for (long r = 0; r < X_test.nr(); ++r) {
-                    for (long c = 0; c < X_test.nc(); ++c) {
-                        std::cout << X_test(r, c) << " ";
-                    }
-                    std::cout << std::endl;
-                }
-                std::vector<double> ptmp(1, 1);
-                print_dlib_X_train(dlib_X_train, 0, dlib_y_train);
-                auto alphas = model.alpha;
-                auto bases = model.basis_vectors;
-                std::cout << "Alphas: ";
-                for (const auto& alpha : alphas) {
-                    std::cout << alpha << " ";
-                }
-                std::cout << std::endl;
-
-                std::cout << "Bases: " << std::endl;
-                for (const auto& base : bases) {
-                    for (long c = 0; c < base.nc(); ++c) {
-                        std::cout << base(0, c) << " ";
-                    }
-                    std::cout << std::endl;
-                }
-
-                }
-            }
             if (std::isnan(variance) || std::isinf(variance) || variance > prediction) { // 2
                 variance = 0.05;
                 //print_dlib_X_train(dlib_X_train, 0, dlib_y_train); 
                 // 7 Ademas modificar sioux matrix + traveltimes de network dividir entre 100
-
                 // hacerlo en gpwm?
             }
 
-            if (rondas - 1 == tau)
-                std::cout << a << " - Prediccion:   " << prediction << " " << variance << std::endl;
+            if (rondas - 1 == tau);
+                //std::cout << a << " - Prediccion:   " << prediction << " " << variance << std::endl;
 
             payoffs[a] = prediction; //8  +variance * beta_t;
             double payoff = std::max(payoffs[a], min_payoff_);
@@ -420,13 +392,13 @@ void Player_cGPMW::computeStrategys(const std::vector<double>& capacities_t)
     int adjust = 0;
     for (int a = 0; a < this->K_; a++) {
         cumlosses[a] = rondas - cumpayoffsscaled[a];
-        if (cumlosses[a] <= 0)
-            std::cout << cumlosses[a];
+        //if (cumlosses[a] <= 0)
+            //std::cout << cumlosses[a];
         double weight = std::exp(-this->gamma_t_ * cumlosses[a]);
         this->weights_[a] = weight;
-        std::cout << " Peso " << a << " " << weight << " scaleD?" << cumpayoffsscaled[a];
+        //std::cout << " Peso " << a << " " << weight << "  ||||  ";;
     }
-    std::cout << std::endl;
+   // std::cout << std::endl;
 
     
 }

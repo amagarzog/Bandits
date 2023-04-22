@@ -11,8 +11,8 @@ Simulation::Simulation(const NetworkData& network) : network(network) {
 
 void Simulation::selectParameters(){
 	/*Parámetros que se establecen para controlar el juego->por defecto toman estos valores*/
-	this->controlledplayers =1;
-	this->rondas = 100;
+	this->controlledplayers = 7;
+	this->rondas = 70;
 	this->numcontextos = 5;
 	this->polykernel = 4;
 	this->reoptimize = false;
@@ -120,7 +120,17 @@ void Simulation::init(){
 	GameData game = GameData(this->numplayers, this->rondas);
 	game.Simulate_Game(run, players, this->rondas, this->network, this->Strategy_vectors, sigmas, Capacities, Total_occupancies, addit_Congestions, Contexts);
 	
-
+	for (int p = 0; p < players.size(); p++) {
+		if (players[p]->getType() == PlayerType::cGPMW) {
+			std::cout << "Jugador cGPMW " << p << ": " << game.getIncurredLosses()[this->rondas - 1][p] << std::endl;
+		}
+		else if (players[p]->getType() == PlayerType::GPMW) {
+			std::cout << "Jugador GPMW " << p << ": " << game.getIncurredLosses()[this->rondas - 1][p] << std::endl;
+		}
+		else {
+			std::cout << "Jugador Hedge " << p << ": " << game.getIncurredLosses()[this->rondas - 1][p] << std::endl;
+		}
+	}
 	// Save Data
 	int data = 32;
 
