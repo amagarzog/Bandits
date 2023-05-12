@@ -12,7 +12,7 @@
 #include <random>
 #include <fstream>
 #include <vector>
-#include <random> // para noisy_loss en Simulate_Game()
+#include <random> 
 #include <Eigen/Dense>
 #include <Eigen/Sparse>
 #include "algorithms.h"
@@ -28,9 +28,9 @@ public:
 
 private:
     std::vector<std::vector<int>> Played_actions;
-    std::vector<double> Mixed_strategies; // no se usa
+    std::vector<double> Mixed_strategies;
     std::vector<std::vector<double>> Incurred_losses;
-    std::vector<double> Regrets; // no se usa
+    std::vector<double> Regrets; 
     std::vector<std::vector<double>> Cum_losses;
 };
 

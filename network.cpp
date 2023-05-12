@@ -86,9 +86,9 @@ int NetworkData::getNumNodos() const {
 
 
 NetworkData createNetwork() {
-    std::vector<std::vector<std::string>> datosNodos = read_csv("SiouxFalls_node.csv"); //TODO cambiar archivo
+    std::vector<std::vector<std::string>> datosNodos = read_csv("SiouxFalls_node.csv");
     std::vector<Nodo> listaNodos = crearListaNodos(datosNodos);
-    std::vector<std::vector<std::string>> datosCarreteras = read_csv("SiouxFalls_net.csv");//TODO cambiar archivo
+    std::vector<std::vector<std::string>> datosCarreteras = read_csv("SiouxFalls_net.csv");
     std::vector<Carretera> listaCarreteras = crearListaCarreteras(datosCarreteras);
     NetworkData network(listaNodos, listaCarreteras);
     return network;
@@ -183,7 +183,7 @@ std::vector<std::vector<std::vector<int>>> computeStrategyVectors(const NetworkD
             }
             std::vector<int> strategyvec(E, 0); //Para cada carretera (76) almaceno la demanda de cada jugador en esa carretera
             std::vector<Carretera> carreteras = network.getCarreteras();
-            for (int j = 0; j < E; j++) { //  TODO MEJORAR RENDIMIENTO (unordered map odpairs)
+            for (int j = 0; j < E; j++) { 
                 if (vec[j] == 1) {
                     bool done = false;
                     for (int i = 0; i < od_Pairs.size() && !done; i++) {

@@ -102,10 +102,7 @@ void Player_GPMW::Update(int ronda, int played_action, std::vector<double> total
 {
 
     this->played_actions.push_back(played_action);
-    for (int i = 0; i < played_actions.size(); i++) {
-        //std::cout << "Brazo jugado Ronda " << i << ": " << played_actions[i] << ", ";
-    }
-    std::cout << std::endl;
+    
     this->history_payoffs.push_back(payoff); 
     std::vector<double> new_history;
     for (int i = 0; i < this->idx_nonzeros.size(); ++i) {
@@ -157,8 +154,6 @@ void Player_GPMW::Update(int ronda, int played_action, std::vector<double> total
 
             double prediction = model(X_test);
             double variance = calculate_residual_variance(model, dlib_X_train, dlib_y_train);
-            std::cout << a << " - Prediccion:   " << prediction << " " << variance << std::endl;
-
 
             this->ucb_rewards_est[a] = prediction + variance * beta_t;
             double payoff = std::max(this->ucb_rewards_est[a], min_payoff_);
@@ -174,9 +169,6 @@ void Player_GPMW::Update(int ronda, int played_action, std::vector<double> total
             this->weights_[a] = weight;
         }
 
-        for (int j = 0; j < weights_.size(); j++)
-            std::cout << "Peso Brazo : "<< j << " - " << weights_[j] << " | ";
-        //std::cout << std::endl;
     }
 }
 
@@ -240,15 +232,15 @@ std::vector<double> Player_cGPMW::mixed_strategy()
 int Player_cGPMW::sample_action()
 {
     std::vector<double> strategy = mixed_strategy();
-    double r = ((double)rand() / RAND_MAX); // de esta forma se consigue que r tenga un valor entre 0 y 1
+    double r = ((double)rand() / RAND_MAX); 
     double sum_prob = 0.0;
     for (int i = 0; i < K_; i++) {
         sum_prob += strategy[i];
         if (r <= sum_prob) {
-            return i; // se elige la acción
+            return i; 
         }
     }
-    return K_ - 1; // In case of numerical errors
+    return K_ - 1;
 }
 
 void Player_cGPMW::UpdateHistory(int ronda, int played_action, std::vector<double> total_occupancies, double payoff, std::vector<double> capacitites)
@@ -256,8 +248,6 @@ void Player_cGPMW::UpdateHistory(int ronda, int played_action, std::vector<doubl
     this->played_actions.push_back(played_action);
     this->history_payoffs.push_back(payoff);
     this->history_occupancies.push_back(total_occupancies);
-
-    //std::cout << "Ronda " << ronda << " playedarm " << played_action << " payoff: " << payoff << std::endl;
     std::vector<int> strategy_row = this->strategy_vecs[played_action];
 
     std::vector<double> nonzero_strategy_elems;
@@ -273,12 +263,9 @@ void Player_cGPMW::UpdateHistory(int ronda, int played_action, std::vector<doubl
     }
 
     std::vector<double> history_row;
-    // cGPMW es distinto a GPMW ya que al contrario que el segundo, este bandido rellena su history con los strategyvecs y con los ratios de ocupados
     history_row.insert(history_row.end(), nonzero_strategy_elems.begin(), nonzero_strategy_elems.end());
     history_row.insert(history_row.end(), occupancy_ratios.begin(), occupancy_ratios.end());
 
-
-    // Add the concatenated row to history
     history.push_back(history_row);
 
 }
@@ -336,7 +323,7 @@ void Player_cGPMW::computeStrategys(const std::vector<double>& capacities_t)
         std::vector<sample_type> new_dlib_X_train(tau + 1);
         std::vector<double> new_dlib_y_train(tau + 1);
 
-        for (int i = 0; i <= tau; ++i) { // desde 0 hata tau
+        for (int i = 0; i <= tau; ++i) { 
             new_dlib_X_train[i] = dlib_X_train[i];
             new_dlib_y_train[i] = dlib_y_train[i];
         }
@@ -373,15 +360,8 @@ void Player_cGPMW::computeStrategys(const std::vector<double>& capacities_t)
             double variance = calculate_residual_variance(model, dlib_X_train, dlib_y_train);
             if (std::isnan(variance) || std::isinf(variance) || variance > prediction) { // 2
                 variance = 0.05;
-                //print_dlib_X_train(dlib_X_train, 0, dlib_y_train); 
-                // 7 Ademas modificar sioux matrix + traveltimes de network dividir entre 100
-                // hacerlo en gpwm?
             }
-
-            if (rondas - 1 == tau);
-                //std::cout << a << " - Prediccion:   " << prediction << " " << variance << std::endl;
-
-            payoffs[a] = prediction; //8  +variance * beta_t;
+            payoffs[a] = prediction;
             double payoff = std::max(payoffs[a], min_payoff_);
             payoff = std::min(payoff, max_payoff_);
             double payoff_scaled = (payoff - min_payoff_) / (max_payoff_ - min_payoff_);
@@ -392,13 +372,9 @@ void Player_cGPMW::computeStrategys(const std::vector<double>& capacities_t)
     int adjust = 0;
     for (int a = 0; a < this->K_; a++) {
         cumlosses[a] = rondas - cumpayoffsscaled[a];
-        //if (cumlosses[a] <= 0)
-            //std::cout << cumlosses[a];
         double weight = std::exp(-this->gamma_t_ * cumlosses[a]);
         this->weights_[a] = weight;
-        //std::cout << " Peso " << a << " " << weight << "  ||||  ";;
     }
-   // std::cout << std::endl;
 
     
 }

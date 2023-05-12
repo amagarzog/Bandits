@@ -2,8 +2,6 @@
 #include "simulation.h"
 #include "network.h"
 
-
-//Revisar TODO incluidos en el codigo
 int main(...)
 {
 	NetworkData network = createNetwork();

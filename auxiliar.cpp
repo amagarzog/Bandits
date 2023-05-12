@@ -103,9 +103,7 @@ void GameData::Simulate_Game(int run, std::vector<Player*>& Players, int T, cons
                 std::normal_distribution<double> dist(mean, std_dev);  // distribución normal
                 double noise = dist(gen);  // generar una muestra aleatoria. dist es un objeto de la clase std::normal_distribution que representa la distribución normal con los parámetros especificados. 
                 double noisy_loss = Incurred_losses[t][i] + noise;
-                if (noisy_loss < 0 || noise < 0) {
-                    //std::cout << "Error calculo noise!" << noise  <<   "   " << Incurred_losses[t][i] << std::endl;
-                }
+                
                 Players[i]->UpdateHistory(t, this->Played_actions[t][i], Total_occupancies.back(), -noisy_loss,Capacities_t);
             }
 
@@ -122,7 +120,6 @@ void GameData::Simulate_Game(int run, std::vector<Player*>& Players, int T, cons
         }
 
         avg_cong /= addit_Congestions.size();
-        //cout << Players[2].type << " run: " << run + 1 << ", time: " << t << ", Avg cong. " << fixed << setprecision(2) << avg_cong << endl;
         }
 }
 
@@ -149,7 +146,6 @@ void Initialize_Players(int N, const std::vector<std::pair<int, int>>& od_Pairs,
             Players[i] = new Player_Hedge(K_i, T, min_payoff, max_payoff);
             for(int brazoborrado = 0;brazoborrado < 4; brazoborrado++)
                 Strategy_vectors[i].pop_back();
-            //eliminar 4 estrategias?
         }
         //Players[i]->OD_pair = OD_pairs[i]; 
         // ODPairs es una lista de pares donde cada i corresponde al agente

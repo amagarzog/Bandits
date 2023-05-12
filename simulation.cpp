@@ -11,12 +11,12 @@ Simulation::Simulation(const NetworkData& network) : network(network) {
 
 void Simulation::selectParameters(){
 	/*Parámetros que se establecen para controlar el juego->por defecto toman estos valores*/
-	this->controlledplayers = 7;
+	this->controlledplayers = 10;
 	this->rondas = 70;
 	this->numcontextos = 5;
 	this->polykernel = 4;
 	this->reoptimize = false;
-	this->Algo = "cGPMW";
+	this->Algo = "GPMW";
 }
 
 void Simulation::init(){
@@ -31,7 +31,7 @@ void Simulation::init(){
 	std::shuffle(idxs_all.begin(), idxs_all.end(), g);
 
 	std::copy(idxs_all.begin(), idxs_all.begin() + this->controlledplayers, this->idcontrolledplayers.begin()); //elegir los controlledPlayers entre todos los players
-
+	
 	// Capacidades y contextos aleatorios
 	std::vector<double> initCapacities = getCapacities(network);
 	std::vector<std::vector<double>> Capacities;
