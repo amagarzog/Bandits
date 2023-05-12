@@ -8,10 +8,15 @@ GameData:: GameData(int N, int T){
     this->Cum_losses = std::vector<std::vector<double>>(T);
 }
 
-void GameData::Simulate_Game(int run, std::vector<Player*>& Players, int T, const NetworkData& network, std::vector<std::vector<std::vector<int>>>& Strategy_vectors, std::vector<double>& sigmas, std::vector<std::vector<double>>& Capacities, std::vector<std::vector<double>>& Total_occupancies, std::vector<std::vector<double>>& addit_Congestions, const std::vector<int>& Contexts)
+int GameData::Simulate_Game(int run, std::vector<Player*>& Players, int T, const NetworkData& network, std::vector<std::vector<std::vector<int>>>& Strategy_vectors, std::vector<double>& sigmas, std::vector<std::vector<double>>& Capacities, std::vector<std::vector<double>>& Total_occupancies, std::vector<std::vector<double>>& addit_Congestions, const std::vector<int>& Contexts, Player* compPlayer, int id)
 {
+    int incurredlosses = 0;
+    bool haycomp = true;
+    if (id == -1) haycomp = false;
     int N = Players.size();
+    std::vector<int> playedactions(T);
 
+    std::vector<std::vector<int>> Played_actionsecond(T);
     /*for (int i = 0; i < N; ++i) {
         // cum loses sera N X K, hay cum loses para cada brazo
         int brazosJugadorI = Players[i]->getK();
@@ -22,6 +27,7 @@ void GameData::Simulate_Game(int run, std::vector<Player*>& Players, int T, cons
     std::vector<double> original_capacities = getCapacities(network);
 
     for (int t = 0; t < T; ++t) {
+        std::cout << "Ronda " << t << std::endl;
         std::vector<double> Capacities_t = Capacities[Contexts[t]]; // se coge la capacidad en la ronda t en funcion del contexto en esa ronda
         std::vector<int> played_actions_t(N);
 
@@ -32,14 +38,28 @@ void GameData::Simulate_Game(int run, std::vector<Player*>& Players, int T, cons
             }
             played_actions_t[i] = Players[i]->sample_action();  // Los jugadores no controlados van a usar siempre su único brazo que es el 0
         }
-        
+        //player comp
+        int asfd = 243;
+        int actioncomp = 0;
+        if (haycomp) actioncomp = compPlayer->sample_action();
         
         this->Played_actions[t] = played_actions_t; // Guarda las acciones de todos los jugadores de la ronda t
-
+        // player comp
+        if (haycomp) playedactions[t] = actioncomp;
         // 2 - Asignar Recompensas/losses
 
         int identificador = -1; // Se asigna el identificador -1 para que compute travel times calcule los tiempos para todos los jugadores
         std::vector<double> losses_t = Compute_traveltimes(network, Strategy_vectors, this->Played_actions[t], identificador, Capacities_t);
+        //played comp
+        double lossesrondat = 0;
+        if (haycomp) {
+            std::vector<int> tmp = Played_actions[t];
+            tmp[id] = actioncomp;
+             std::vector<double> lossestmp = Compute_traveltimes(network, Strategy_vectors, tmp, id, Capacities_t);
+            lossesrondat = lossestmp[id];
+            std::cout << "El brazo elegido por el GPMW es " << actioncomp << " vs el elegido por el clGPMW es " << Played_actions[t][id] << std::endl;
+            std::cout << "Las perdidas obtenidas por el GPMW: " << lossesrondat << " vs las perdidas del cGPMW: " << losses_t[id] << std::endl;
+        }
         this->Incurred_losses[t] = losses_t ; // Incurred_losses[t][player_id] --> para la ronda t devuelve el ARREPENTIMIENTO del jugador player_id
 
         // Calculamos perdidas acumuladas 
@@ -48,6 +68,7 @@ void GameData::Simulate_Game(int run, std::vector<Player*>& Players, int T, cons
             for (int i = 0; i < N; i++) {
                 cum_losses_t[i] = this->Cum_losses[t - 1][i] + this->Incurred_losses[t][i];
             }
+            if(haycomp) incurredlosses += lossesrondat;
             this->Cum_losses[t] = cum_losses_t;
         }
         else this->Cum_losses[t] = losses_t;
@@ -108,6 +129,18 @@ void GameData::Simulate_Game(int run, std::vector<Player*>& Players, int T, cons
             }
 
         }
+        //player cmp
+        if (haycomp) {
+            double mean = 0.0;  // media
+            double std_dev = sigmas[id];  // desviación estándar
+            std::mt19937 gen(1234);  // semilla del generador de números aleatorios
+            std::normal_distribution<double> dist(mean, std_dev);  // distribución normal
+            double noise = dist(gen);  // generar una muestra aleatoria. dist es un objeto de la clase std::normal_distribution que representa la distribución normal con los parámetros especificados. 
+            double noisy_loss = incurredlosses + noise;
+            //std::cout << "Ronda: " << t << std::endl;
+            compPlayer->Update(t, actioncomp, Total_occupancies.back(), -noisy_loss, Capacities_t);
+        }
+        
 
 
         double avg_cong = 0;
@@ -121,9 +154,11 @@ void GameData::Simulate_Game(int run, std::vector<Player*>& Players, int T, cons
 
         avg_cong /= addit_Congestions.size();
         }
+        return incurredlosses;
 }
 
-void Initialize_Players(int N, const std::vector<std::pair<int, int>>& od_Pairs, std::vector<std::vector<std::vector<int>>> &Strategy_vectors, std::vector<double> min_traveltimes, std::vector<double> max_traveltimes, std::vector<int> idxs_controlled, double T, std::string Algo, int version, std::vector<double> Sigma, std::vector<Eigen::MatrixXd>& Kernels, std::vector<double> sigmas, int numberofcontexts, std::vector<std::vector<double>> Capacities, std::vector<Player*>& Players) {
+void Initialize_Players(int N, const std::vector<std::pair<int, int>>& od_Pairs, std::vector<std::vector<std::vector<int>>> &Strategy_vectors, std::vector<double> min_traveltimes, std::vector<double> max_traveltimes, std::vector<int> idxs_controlled, double T, std::string Algo, int version, std::vector<double> Sigma, std::vector<Eigen::MatrixXd>& Kernels, std::vector<double> sigmas, int numberofcontexts, std::vector<std::vector<double>> Capacities, std::vector<Player*>& Players, int &id, Player*& compPlayer) {
+    bool one = false;
     for (int i = 0; i < N; i++) {
         int K_i = Strategy_vectors[i].size();
         double min_payoff = -max_traveltimes[i]; // min recompensa = - max tiempo viaje
@@ -139,6 +174,11 @@ void Initialize_Players(int N, const std::vector<std::pair<int, int>>& od_Pairs,
             }
             else if (Algo == "cGPMW") {
                 Players[i] = new Player_cGPMW(K_i, T, min_payoff, max_payoff, Capacities, Strategy_vectors[i], Kernels[i], sigmas[i]);
+                if (!one) {
+                    compPlayer = new Player_GPMW(K_i, T, min_payoff, max_payoff, Strategy_vectors[i], Kernels[i], sigmas[i]);
+                    id = i;
+                    one = true;
+                }
             }
         }
         else {

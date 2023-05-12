@@ -16,7 +16,7 @@ void Simulation::selectParameters(){
 	this->numcontextos = 5;
 	this->polykernel = 4;
 	this->reoptimize = false;
-	this->Algo = "GPMW";
+	this->Algo = "cGPMW";
 }
 
 void Simulation::init(){
@@ -110,7 +110,9 @@ void Simulation::init(){
 
 	// Inicializar jugadores
 	std::vector<Player*> players(this->numplayers);
-	Initialize_Players(this->numplayers, this->od_Pairs, this->Strategy_vectors, min_traveltimes, max_traveltimes, this->idcontrolledplayers, this->rondas, this->Algo, 0, sigmas, Kernels, sigmas, this->numcontextos, Capacities, players);
+	int id = -1;
+	Player* compPlayer = nullptr;
+	Initialize_Players(this->numplayers, this->od_Pairs, this->Strategy_vectors, min_traveltimes, max_traveltimes, this->idcontrolledplayers, this->rondas, this->Algo, 0, sigmas, Kernels, sigmas, this->numcontextos, Capacities, players, id, compPlayer);
 	
 	
 	// Simulate Game
@@ -118,19 +120,29 @@ void Simulation::init(){
 	std::vector<std::vector<double>> addit_Congestions (this->rondas);
 	std::vector<std::vector<double>> Total_occupancies;
 	GameData game = GameData(this->numplayers, this->rondas);
-	game.Simulate_Game(run, players, this->rondas, this->network, this->Strategy_vectors, sigmas, Capacities, Total_occupancies, addit_Congestions, Contexts);
+	int cumLossescmp = game.Simulate_Game(run, players, this->rondas, this->network, this->Strategy_vectors, sigmas, Capacities, Total_occupancies, addit_Congestions, Contexts, compPlayer, id);
 	
 	for (int p = 0; p < players.size(); p++) {
 		if (players[p]->getType() == PlayerType::cGPMW) {
-			std::cout << "Jugador cGPMW " << p << ": " << game.getIncurredLosses()[this->rondas - 1][p] << std::endl;
+			std::cout << "Jugador cGPMW " << p << ": " << game.getCumLosses()[this->rondas - 1][p] << std::endl;
 		}
 		else if (players[p]->getType() == PlayerType::GPMW) {
-			std::cout << "Jugador GPMW " << p << ": " << game.getIncurredLosses()[this->rondas - 1][p] << std::endl;
+			std::cout << "Jugador GPMW " << p << ": " << game.getCumLosses()[this->rondas - 1][p] << std::endl;
 		}
 		else {
-			std::cout << "Jugador Hedge " << p << ": " << game.getIncurredLosses()[this->rondas - 1][p] << std::endl;
+			std::cout << "Jugador Hedge " << p << ": " << game.getCumLosses()[this->rondas - 1][p] << std::endl;
 		}
 	}
+
+	//if(id != -1)
+	//	std::cout << "Jugador GPMW " <<  id << ": " <<cumLossescmp << std::endl;
+	
+	double ind = game.getCumLosses()[this->rondas - 1][id] / cumLossescmp;
+	ind *= 100;
+	std::cout << "-----------Resultados-----------" << std::endl << "En este caso tenemos para el " << id << ":" << std :: endl;
+	std::cout << "Unas perdidas acumuladas GPMW: " << cumLossescmp << " vs cGPMW: " << game.getCumLosses()[this->rondas - 1][id] << std::endl;
+	std::cout << "Estamos mejorando el remordimiento con el cGPMW (con el contexto) un " << ind << "%" << std::endl;
+
 	// Save Data
 	int data = 32;
 
