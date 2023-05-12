@@ -12,8 +12,8 @@ Simulation::Simulation(const NetworkData& network) : network(network) {
 void Simulation::selectParameters(){
 	/*Parámetros que se establecen para controlar el juego->por defecto toman estos valores*/
 	this->controlledplayers = 10;
-	this->rondas = 70;
-	this->numcontextos = 5;
+	this->rondas = 85;
+	this->numcontextos = 7;
 	this->polykernel = 4;
 	this->reoptimize = false;
 	this->Algo = "cGPMW";
@@ -138,10 +138,11 @@ void Simulation::init(){
 	//	std::cout << "Jugador GPMW " <<  id << ": " <<cumLossescmp << std::endl;
 	
 	double ind = game.getCumLosses()[this->rondas - 1][id] / cumLossescmp;
+	ind = 1 - ind;
 	ind *= 100;
 	std::cout << "-----------Resultados-----------" << std::endl << "En este caso tenemos para el " << id << ":" << std :: endl;
 	std::cout << "Unas perdidas acumuladas GPMW: " << cumLossescmp << " vs cGPMW: " << game.getCumLosses()[this->rondas - 1][id] << std::endl;
-	std::cout << "Estamos mejorando el remordimiento con el cGPMW (con el contexto) un " << ind << "%" << std::endl;
+	std::cout << "Estamos reduciendo las perdidas con el bandido contextual un " << ind << "%" << std::endl;
 
 	// Save Data
 	int data = 32;

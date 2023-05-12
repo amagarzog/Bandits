@@ -57,7 +57,7 @@ int GameData::Simulate_Game(int run, std::vector<Player*>& Players, int T, const
             tmp[id] = actioncomp;
              std::vector<double> lossestmp = Compute_traveltimes(network, Strategy_vectors, tmp, id, Capacities_t);
             lossesrondat = lossestmp[id];
-            std::cout << "El brazo elegido por el GPMW es " << actioncomp << " vs el elegido por el clGPMW es " << Played_actions[t][id] << std::endl;
+            std::cout << "El brazo elegido por el GPMW es " << actioncomp << " vs el elegido por el cGPMW es " << Played_actions[t][id] << std::endl;
             std::cout << "Las perdidas obtenidas por el GPMW: " << lossesrondat << " vs las perdidas del cGPMW: " << losses_t[id] << std::endl;
         }
         this->Incurred_losses[t] = losses_t ; // Incurred_losses[t][player_id] --> para la ronda t devuelve el ARREPENTIMIENTO del jugador player_id
