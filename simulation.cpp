@@ -10,10 +10,10 @@ Simulation::Simulation(const NetworkData& network) : network(network) {
 }
 
 void Simulation::selectParameters(){
-	/*Parámetros que se establecen para controlar el juego->por defecto toman estos valores*/
+	/*Parámetros que se establecen para controlar el juego->por defecto toman estos valores // NO MODIFICAR*/
 	this->controlledplayers = 10;
-	this->rondas = 85;
-	this->numcontextos = 7;
+	this->rondas = 70;
+	this->numcontextos = 12;
 	this->polykernel = 4;
 	this->reoptimize = false;
 	this->Algo = "cGPMW";
@@ -120,7 +120,12 @@ void Simulation::init(){
 	std::vector<std::vector<double>> addit_Congestions (this->rondas);
 	std::vector<std::vector<double>> Total_occupancies;
 	GameData game = GameData(this->numplayers, this->rondas);
-	int cumLossescmp = game.Simulate_Game(run, players, this->rondas, this->network, this->Strategy_vectors, sigmas, Capacities, Total_occupancies, addit_Congestions, Contexts, compPlayer, id);
+	std::vector<std::pair<int, int>> chosen_arms(this->rondas);
+	std::vector<double> lossesdef(this->rondas);
+	std::vector<double> lossescomp(this->rondas);
+
+
+	int cumLossescmp = game.Simulate_Game(run, players, this->rondas, this->network, this->Strategy_vectors, sigmas, Capacities, Total_occupancies, addit_Congestions, Contexts, compPlayer, id, chosen_arms, lossesdef, lossescomp);
 	
 	for (int p = 0; p < players.size(); p++) {
 		if (players[p]->getType() == PlayerType::cGPMW) {
@@ -137,15 +142,27 @@ void Simulation::init(){
 	//if(id != -1)
 	//	std::cout << "Jugador GPMW " <<  id << ": " <<cumLossescmp << std::endl;
 	
-	double ind = game.getCumLosses()[this->rondas - 1][id] / cumLossescmp;
-	ind = 1 - ind;
-	ind *= 100;
-	std::cout << "-----------Resultados-----------" << std::endl << "En este caso tenemos para el " << id << ":" << std :: endl;
-	std::cout << "Unas perdidas acumuladas GPMW: " << cumLossescmp << " vs cGPMW: " << game.getCumLosses()[this->rondas - 1][id] << std::endl;
-	std::cout << "Estamos reduciendo las perdidas con el bandido contextual un " << ind << "%" << std::endl;
+	if (id != -1) {
+		double ind = game.getCumLosses()[this->rondas - 1][id] / cumLossescmp;
+		ind = 1 - ind;
+		ind *= 100;
+		std::cout << "-----------Resultados-----------" << std::endl << "En este caso tenemos para el " << id << ":" << std::endl;
+		std::cout << "Unas perdidas acumuladas GPMW: " << cumLossescmp << " vs cGPMW: " << game.getCumLosses()[this->rondas - 1][id] << std::endl;
+		std::cout << "Estamos reduciendo las perdidas con el bandido contextual un " << ind << "%" << std::endl;
 
-	// Save Data
-	int data = 32;
+
+		// save comparation 
+
+		std::ofstream file;
+		file.open("output.txt");
+
+		for (int i = 0; i < this->rondas; i++) {
+			file << chosen_arms[i].first << "," << chosen_arms[i].second << ",";
+			file << lossesdef[i] << "," << lossescomp[i] << "\n";
+		}
+
+		file.close();
+	}
 
 }
 

@@ -7,6 +7,8 @@
 #include <string>
 #include <iostream>
 #include <cmath>
+#include <utility>
+#include <fstream>
 #include <string>
 #include <cmath>
 #include <random>
@@ -21,7 +23,7 @@
 class GameData {
 public:
     GameData(int N, int T);
-    int Simulate_Game(int run, std::vector<Player*>& Players, int T, const NetworkData& network, std::vector<std::vector<std::vector<int>>>& Strategy_vectors, std::vector<double>& sigmas, std::vector<std::vector<double>>& Capacities, std::vector<std::vector<double>>& Total_occupancies, std::vector<std::vector<double>>& addit_Congestions, const std::vector<int>& Contexts, Player* compPlayer, int id);
+    int Simulate_Game(int run, std::vector<Player*>& Players, int T, const NetworkData& network, std::vector<std::vector<std::vector<int>>>& Strategy_vectors, std::vector<double>& sigmas, std::vector<std::vector<double>>& Capacities, std::vector<std::vector<double>>& Total_occupancies, std::vector<std::vector<double>>& addit_Congestions, const std::vector<int>& Contexts, Player* compPlayer, int id, std::vector<std::pair<int, int>>& chosen_arms, std::vector<double>& lossesdef, std::vector<double>& lossescomp);
     const std::vector<std::vector<int>>& getPlayedActions() const { return Played_actions; }
     const std::vector<std::vector<double>>& getIncurredLosses() const { return Incurred_losses; }
     const std::vector<std::vector<double>>& getCumLosses() const { return Cum_losses; }

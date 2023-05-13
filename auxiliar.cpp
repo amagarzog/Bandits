@@ -8,10 +8,11 @@ GameData:: GameData(int N, int T){
     this->Cum_losses = std::vector<std::vector<double>>(T);
 }
 
-int GameData::Simulate_Game(int run, std::vector<Player*>& Players, int T, const NetworkData& network, std::vector<std::vector<std::vector<int>>>& Strategy_vectors, std::vector<double>& sigmas, std::vector<std::vector<double>>& Capacities, std::vector<std::vector<double>>& Total_occupancies, std::vector<std::vector<double>>& addit_Congestions, const std::vector<int>& Contexts, Player* compPlayer, int id)
+int GameData::Simulate_Game(int run, std::vector<Player*>& Players, int T, const NetworkData& network, std::vector<std::vector<std::vector<int>>>& Strategy_vectors, std::vector<double>& sigmas, std::vector<std::vector<double>>& Capacities, std::vector<std::vector<double>>& Total_occupancies, std::vector<std::vector<double>>& addit_Congestions, const std::vector<int>& Contexts, Player* compPlayer, int id, std::vector<std::pair<int, int>> &chosen_arms, std::vector<double> &lossesdef, std::vector<double> &lossescomp)
 {
     int incurredlosses = 0;
     bool haycomp = true;
+    
     if (id == -1) haycomp = false;
     int N = Players.size();
     std::vector<int> playedactions(T);
@@ -57,7 +58,11 @@ int GameData::Simulate_Game(int run, std::vector<Player*>& Players, int T, const
             tmp[id] = actioncomp;
              std::vector<double> lossestmp = Compute_traveltimes(network, Strategy_vectors, tmp, id, Capacities_t);
             lossesrondat = lossestmp[id];
-            std::cout << "El brazo elegido por el GPMW es " << actioncomp << " vs el elegido por el cGPMW es " << Played_actions[t][id] << std::endl;
+            chosen_arms[t] = {actioncomp, Played_actions[t][id]};
+            lossesdef[t] = losses_t[id];
+            lossescomp[t] = lossesrondat;
+              
+            std::cout << "El brazo elegido por el GPMW es " << actioncomp << " vs el elegido por el cGPMW es " << Played_actions[t][id] << " ||  El contexto es " << Contexts[t] << std::endl;
             std::cout << "Las perdidas obtenidas por el GPMW: " << lossesrondat << " vs las perdidas del cGPMW: " << losses_t[id] << std::endl;
         }
         this->Incurred_losses[t] = losses_t ; // Incurred_losses[t][player_id] --> para la ronda t devuelve el ARREPENTIMIENTO del jugador player_id
@@ -136,7 +141,8 @@ int GameData::Simulate_Game(int run, std::vector<Player*>& Players, int T, const
             std::mt19937 gen(1234);  // semilla del generador de números aleatorios
             std::normal_distribution<double> dist(mean, std_dev);  // distribución normal
             double noise = dist(gen);  // generar una muestra aleatoria. dist es un objeto de la clase std::normal_distribution que representa la distribución normal con los parámetros especificados. 
-            double noisy_loss = incurredlosses + noise;
+            double noisy_loss = lossesrondat + noise;
+            //std::cout << -noisy_loss << std::endl;
             //std::cout << "Ronda: " << t << std::endl;
             compPlayer->Update(t, actioncomp, Total_occupancies.back(), -noisy_loss, Capacities_t);
         }
