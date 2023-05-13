@@ -12,6 +12,11 @@ int GameData::Simulate_Game(int run, std::vector<Player*>& Players, int T, const
 {
     int incurredlosses = 0;
     bool haycomp = true;
+    std::vector<double> cumlosscomp(T);
+    std::vector<double> cumlossdef(T);
+    cumlosscomp[0] = 0;
+    cumlossdef[0] = 0;
+
     
     if (id == -1) haycomp = false;
     int N = Players.size();
@@ -61,9 +66,20 @@ int GameData::Simulate_Game(int run, std::vector<Player*>& Players, int T, const
             chosen_arms[t] = {actioncomp, Played_actions[t][id]};
             lossesdef[t] = losses_t[id];
             lossescomp[t] = lossesrondat;
+            if (t > 0) {
+                cumlosscomp[t] = lossescomp[t] + cumlosscomp[t - 1];
+                cumlossdef[t] = lossesdef[t] + cumlossdef[t - 1];
+            }
+            else {
+                cumlosscomp[t] = lossescomp[t];
+                cumlossdef[t] = lossesdef[t];
+            }
+
               
             std::cout << "El brazo elegido por el GPMW es " << actioncomp << " vs el elegido por el cGPMW es " << Played_actions[t][id] << " ||  El contexto es " << Contexts[t] << std::endl;
             std::cout << "Las perdidas obtenidas por el GPMW: " << lossesrondat << " vs las perdidas del cGPMW: " << losses_t[id] << std::endl;
+            std::cout << "Las perdidas acumuladas por el GPMW: " << cumlosscomp[t] << " vs las perdidas acumuladas del cGPMW: " << cumlossdef[t] << std::endl;
+
         }
         this->Incurred_losses[t] = losses_t ; // Incurred_losses[t][player_id] --> para la ronda t devuelve el ARREPENTIMIENTO del jugador player_id
 

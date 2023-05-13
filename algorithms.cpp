@@ -332,7 +332,7 @@ void Player_cGPMW::computeStrategys(const std::vector<double>& capacities_t)
 {   
     int rondas = this->history.size();
     std::vector<double> cumpayoffsscaled(K, 0.0);
-    double gamma = 0.23, beta_t = 0.5;
+    double gamma = 0.4, beta_t = 0.5;
     dlib::rvm_regression_trainer<kernel_type> trainer;
     trainer.set_kernel(kernel_type(gamma));
     double max, min;

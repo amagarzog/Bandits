@@ -12,8 +12,8 @@ Simulation::Simulation(const NetworkData& network) : network(network) {
 void Simulation::selectParameters(){
 	/*Parámetros que se establecen para controlar el juego->por defecto toman estos valores // NO MODIFICAR*/
 	this->controlledplayers = 10;
-	this->rondas = 70;
-	this->numcontextos = 12;
+	this->rondas = 75;
+	this->numcontextos = 20;
 	this->polykernel = 4;
 	this->reoptimize = false;
 	this->Algo = "cGPMW";
@@ -125,7 +125,7 @@ void Simulation::init(){
 	std::vector<double> lossescomp(this->rondas);
 
 
-	int cumLossescmp = game.Simulate_Game(run, players, this->rondas, this->network, this->Strategy_vectors, sigmas, Capacities, Total_occupancies, addit_Congestions, Contexts, compPlayer, id, chosen_arms, lossesdef, lossescomp);
+	int cumLossescmp = game.Simulate_Game(run, players, this->rondas, this->network, this->Strategy_vectors, sigmas, Capacities, Total_occupancies, addit_Congestions, Contexts, compPlayer, id, chosen_arms, lossescomp, lossesdef);
 	
 	for (int p = 0; p < players.size(); p++) {
 		if (players[p]->getType() == PlayerType::cGPMW) {
